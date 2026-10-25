@@ -1,0 +1,31 @@
+{
+  "name": "codex-live-usage",
+  "version": "0.1.0",
+  "description": "在 Windows Codex 回复下方显示 Codex++ 风格的单行 token 用量徽标。",
+  "author": {
+    "name": "Codex Live Usage contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "usage",
+    "tokens",
+    "windows"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex 常驻用量",
+    "shortDescription": "在最新 Codex 回复下方显示本地 token 用量。",
+    "longDescription": "使用独立透明伴随窗口显示上下文、缓存命中率、输入输出、输出速度和会话总量。不联网、不修改 Codex，也不依赖 Codex++。",
+    "developerName": "Codex Live Usage contributors",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Desktop"
+    ],
+    "defaultPrompt": [
+      "安装 Codex 常驻用量",
+      "查看 Codex 常驻用量状态",
+      "卸载 Codex 常驻用量"
+    ]
+  }
+}

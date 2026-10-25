@@ -1,0 +1,22 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "codex-live-usage",
+  "version": "0.1.0",
+  "description": "Windows companion that displays Codex++-style token usage below the latest Codex Desktop reply.",
+  "author": {
+    "name": "Codex Live Usage contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "usage",
+    "tokens",
+    "windows"
+  ],
+  "skills": "./skills/",
+  "extensions": {
+    "com.openai": {
+      "requires_local_executor": true
+    }
+  }
+}

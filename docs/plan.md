@@ -225,23 +225,23 @@ Expected: exactly one process; no console window, taskbar button, or focus steal
 - Produces: login task `Codex Live Usage Companion`.
 - Produces: `install.ps1`, `uninstall.ps1`, and a repeatable Release build.
 
-- [ ] **Step 1: Add plugin metadata**
+- [x] **Step 1: Add plugin metadata**
 
 Use `.codex-plugin/plugin.json` with name `codex-live-usage`, version `0.1.0`, display name `Codex 常驻用量`, and the bundled skill. Do not declare an MCP server.
 
-- [ ] **Step 2: Add build and install scripts**
+- [x] **Step 2: Add build and install scripts**
 
 `build.ps1` publishes win-x64 to `artifacts/publish`. `install.ps1` locates that executable, verifies `dotnet --list-runtimes` includes Microsoft.WindowsDesktop.App 9.x, verifies the Codex executable, registers the current-user interactive login task, starts it, and writes `%LOCALAPPDATA%\CodexLiveUsage\install-state.json`.
 
-- [ ] **Step 3: Add safe uninstall**
+- [x] **Step 3: Add safe uninstall**
 
 Read and validate the stored PID before stopping it. Unregister only `Codex Live Usage Companion`. Remove only `%LOCALAPPDATA%\CodexLiveUsage` and the plugin’s build output. Never touch `~/.codex/sessions`, Codex config, API balance whale data, or marketplace files.
 
-- [ ] **Step 4: Add license notices**
+- [x] **Step 4: Add license notices**
 
 Document architectural references and commit hashes from the spec. Do not copy unlicensed code. Include the MIT license text for any copied C# helper.
 
-- [ ] **Step 5: Validate scripts**
+- [x] **Step 5: Validate scripts**
 
 Run the PowerShell parser on build/install/uninstall:
 
