@@ -50,7 +50,7 @@ public static class MetricsFormatter
             segments.Add(new UsageSegment(metrics[index].Value, UsageFontRole.LatinValue));
             if (index < metrics.Count - 1)
             {
-                segments.Add(new UsageSegment("      ", UsageFontRole.ChineseLabel));
+                segments.Add(new UsageSegment("        ", UsageFontRole.ChineseLabel));
             }
         }
 

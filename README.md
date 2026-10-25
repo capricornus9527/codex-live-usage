@@ -21,8 +21,8 @@ No Codex++, CDP, DOM injection, proxy, API key, or network request is used.
 
 - Fixed position directly below the Codex composer.
 - Fully transparent background with no border, card, or separator symbols.
-- Centered below the composer with six spaces between metrics.
-- Rendered as one 12 px line at 90% opacity.
+- Centered below the composer with eight spaces between metrics.
+- Rendered as one fully opaque 12 px line using Codex's muted-gray text color.
 - Chinese labels use Microsoft YaHei; numbers and Latin text use Times New Roman.
 - Context used/limit and percentage.
 - Cache hit rate.
@@ -69,7 +69,7 @@ directly below the composer and follows the Codex window automatically.
 Example:
 
 ```text
-上下文：110.9K/1.0M (10.6%)      缓存命中率：92%      输入：108K      输出：146      输出速度：33.5 tok/s
+上下文：110.9K/1.0M (10.6%)        缓存命中率：92%        输入：108K        输出：146        输出速度：33.5 tok/s
 ```
 
 The line hides rather than showing invented zero values when no valid metric

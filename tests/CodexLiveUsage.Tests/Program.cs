@@ -166,7 +166,7 @@ Run("formats the usage line with Codex++ labels and compact tokens", () =>
         SessionTotal: 1_160_000));
 
     TestAssert.Equal(
-        "上下文：110.9K/1.0M (10.6%)      缓存命中率：92%      输入：108K      输出：146      输出速度：33.5 tok/s",
+        "上下文：110.9K/1.0M (10.6%)        缓存命中率：92%        输入：108K        输出：146        输出速度：33.5 tok/s",
         text);
     TestAssert.True(!text.Contains("会话累计", StringComparison.Ordinal));
 });

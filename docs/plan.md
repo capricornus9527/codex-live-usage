@@ -194,7 +194,7 @@ Find the visible Codex composer edit control with the greatest bottom edge in th
 Poll window geometry every 250 ms and rollout data every 1000 ms. Render:
 
 ```text
-上下文：330/1.0K (33%)      缓存命中率：66.7%      输入：300      输出：30      输出速度：15 tok/s
+上下文：330/1.0K (33%)        缓存命中率：66.7%        输入：300        输出：30        输出速度：15 tok/s
 ```
 
 Hide the line when no complete metrics exist. Keep the previous text while a partial JSON line is pending.
@@ -280,7 +280,7 @@ Keep Codex visible with the current conversation. Capture a screenshot and verif
 
 - usage line appears centered directly below the composer;
 - background is fully transparent with no border or container;
-- Codex++ metric labels are separated by six spaces on one line;
+- Codex++ metric labels are separated by eight spaces on one line;
 - metrics change after a new token event;
 - line follows Codex move/resize;
 - line hides on minimize and recovers on restore;
@@ -314,6 +314,7 @@ Verified on 2026-10-25:
   across minimize and restore. Codex was left restored.
 - Fixed-position test: the transparent line coordinates remained unchanged
   over a two-second metrics refresh interval.
+- Final composer geometry: text center delta `0 px`, bottom gap `3 px`.
 - Window styles: `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`, and
   `WS_EX_TOOLWINDOW` are enabled; the Codex main window is the overlay owner.
 - Visual check: text-only preview is committed at

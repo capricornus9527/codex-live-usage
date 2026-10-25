@@ -40,7 +40,7 @@ internal sealed class UsageLineWindow : Window
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
-            Opacity = 0.9,
+            Opacity = 1,
         };
         TextOptions.SetTextFormattingMode(_textBlock, TextFormattingMode.Display);
         TextOptions.SetTextRenderingMode(_textBlock, TextRenderingMode.Grayscale);
@@ -119,8 +119,8 @@ internal sealed class UsageLineWindow : Window
             "AppsUseLightTheme",
             1) is not int value || value != 0;
         _textBlock.Foreground = FrozenBrush(light
-            ? Colors.Black
-            : Color.FromRgb(238, 245, 242));
+            ? Color.FromRgb(167, 168, 169)
+            : Color.FromRgb(178, 184, 188));
     }
 
     private static Brush FrozenBrush(Color color)
