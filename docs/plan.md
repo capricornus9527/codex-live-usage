@@ -315,6 +315,8 @@ Verified on 2026-10-25:
 - Fixed-position test: the transparent line coordinates remained unchanged
   over a two-second metrics refresh interval.
 - Final composer geometry: text center delta `0 px`, bottom gap `3 px`.
+- Final typography: 12 px, Microsoft YaHei labels, Times New Roman values,
+  eight-space separators, 100% opacity, and muted-gray `RGB(167, 168, 169)`.
 - Window styles: `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`, and
   `WS_EX_TOOLWINDOW` are enabled; the Codex main window is the overlay owner.
 - Visual check: text-only preview is committed at
