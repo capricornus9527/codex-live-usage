@@ -118,17 +118,16 @@ Run the Task 1 command. Expected: all parser, partial-line, and rotation tests p
 - Modify: `codex-plugins/codex-live-usage/tests/CodexLiveUsage.Tests/Program.cs`
 
 **Interfaces:**
-- Produces: `OverlayPlacement.BelowAnchor(PixelRect host, PixelRect anchor, PixelSize badge, double dpiScale, int gap) -> PixelRect`
-- Produces: `OverlayPlacement.FallbackAboveComposer(PixelRect host, PixelRect composer, PixelSize badge, double dpiScale, int gap) -> PixelRect`
+- Produces: `OverlayPlacement.BelowAnchor(PixelRect host, PixelRect anchor, PixelSize badge, int gap) -> PixelRect?`
+- Produces: `OverlayPlacement.FallbackAboveComposer(PixelRect host, PixelRect composer, PixelSize badge, int gap) -> PixelRect?`
 
-- [ ] **Step 1: Write failing placement tests**
+- [x] **Step 1: Write failing placement tests**
 
 ```csharp
 var placed = OverlayPlacement.BelowAnchor(
     new PixelRect(100, 100, 1200, 900),
     new PixelRect(300, 620, 760, 40),
     new PixelSize(500, 28),
-    1.5,
     6);
 Assert.Equal(300, placed.Left);
 Assert.Equal(666, placed.Top);
@@ -136,19 +135,19 @@ Assert.True(placed.Right <= 1300);
 Assert.True(placed.Bottom <= 1000);
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Expected: missing `OverlayPlacement`, `PixelRect`, and `PixelSize`.
 
-- [ ] **Step 3: Implement placement**
+- [x] **Step 3: Implement placement**
 
 Preserve the anchor's left edge. Add the physical-pixel gap below the action bar. Clamp horizontally and vertically inside the host. For fallback, align left with the composer text area and place above its top edge. Never return a negative visible width.
 
-- [ ] **Step 4: Add DPI and clamping tests**
+- [x] **Step 4: Add boundary and fallback tests**
 
-Assert that a badge wider than the host is clamped to the host width, and that a badge near the bottom moves above the composer rather than leaving the window.
+Assert that a badge wider than the host is clamped to the host width, and that fallback placement moves above the composer rather than leaving the window.
 
-- [ ] **Step 5: Run tests and verify GREEN**
+- [x] **Step 5: Run tests and verify GREEN**
 
 Run the Task 1 command. Expected: placement assertions pass.
 

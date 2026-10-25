@@ -111,6 +111,50 @@ Run("switches rollout files and resets after truncation", () =>
     TestAssert.Equal(75d, monitor.Poll()?.ContextPercent);
 });
 
+Run("places the badge directly below the action anchor", () =>
+{
+    var placed = OverlayPlacement.BelowAnchor(
+        new PixelRect(100, 100, 1200, 900),
+        new PixelRect(300, 620, 760, 40),
+        new PixelSize(500, 28),
+        6);
+
+    TestAssert.NotNull(placed);
+    TestAssert.Equal(300, placed!.Value.Left);
+    TestAssert.Equal(666, placed.Value.Top);
+    TestAssert.True(placed.Value.Right <= 1300);
+    TestAssert.True(placed.Value.Bottom <= 1000);
+});
+
+Run("clamps an oversized badge inside the host", () =>
+{
+    var placed = OverlayPlacement.BelowAnchor(
+        new PixelRect(100, 100, 400, 300),
+        new PixelRect(100, 180, 400, 40),
+        new PixelSize(800, 28),
+        6);
+
+    TestAssert.NotNull(placed);
+    TestAssert.Equal(100, placed!.Value.Left);
+    TestAssert.Equal(400, placed.Value.Width);
+    TestAssert.Equal(500, placed.Value.Right);
+});
+
+Run("falls back above the composer and keeps the badge visible", () =>
+{
+    var placed = OverlayPlacement.FallbackAboveComposer(
+        new PixelRect(100, 100, 900, 700),
+        new PixelRect(220, 650, 650, 120),
+        new PixelSize(500, 28),
+        6);
+
+    TestAssert.NotNull(placed);
+    TestAssert.Equal(220, placed!.Value.Left);
+    TestAssert.Equal(616, placed.Value.Top);
+    TestAssert.Equal(720, placed.Value.Right);
+    TestAssert.True(placed.Value.Bottom < 650);
+});
+
 if (failures.Count > 0)
 {
     Console.Error.WriteLine();
@@ -144,6 +188,22 @@ static class TestAssert
         if (actual is not null)
         {
             throw new InvalidOperationException($"Expected null, got {actual}.");
+        }
+    }
+
+    public static void NotNull(object? actual)
+    {
+        if (actual is null)
+        {
+            throw new InvalidOperationException("Expected a value, got null.");
+        }
+    }
+
+    public static void True(bool actual)
+    {
+        if (!actual)
+        {
+            throw new InvalidOperationException("Expected true, got false.");
         }
     }
 }
