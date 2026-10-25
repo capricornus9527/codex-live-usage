@@ -111,6 +111,51 @@ Run("switches rollout files and resets after truncation", () =>
     TestAssert.Equal(75d, monitor.Poll()?.ContextPercent);
 });
 
+Run("switches metrics to the selected conversation and starts idle at zero speed", () =>
+{
+    using var directory = TestDirectory.Create();
+    var sessions = Path.Combine(directory.Path, "sessions", "2026", "10", "25");
+    Directory.CreateDirectory(sessions);
+    const string threadA = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+    const string threadB = "11111111-2222-3333-4444-555555555555";
+    var fileA = Path.Combine(sessions, $"rollout-2026-10-25T00-00-00-{threadA}.jsonl");
+    var fileB = Path.Combine(sessions, $"rollout-2026-10-25T00-01-00-{threadB}.jsonl");
+    File.WriteAllText(fileA, FirstEvent + Environment.NewLine);
+    File.WriteAllText(fileB, SecondEvent + Environment.NewLine);
+    File.SetLastWriteTimeUtc(fileA, new DateTime(2026, 10, 25, 0, 0, 0, DateTimeKind.Utc));
+    File.SetLastWriteTimeUtc(fileB, new DateTime(2026, 10, 25, 0, 1, 0, DateTimeKind.Utc));
+
+    var monitor = new RolloutMetricsMonitor(directory.Path);
+    monitor.SelectThread(threadA);
+    var selectedA = monitor.Poll();
+    TestAssert.Equal(110d, selectedA?.ContextUsed);
+    TestAssert.Equal(0d, selectedA?.OutputTokensPerSecond);
+
+    monitor.SelectThread(threadB);
+    var selectedB = monitor.Poll();
+    TestAssert.Equal(330d, selectedB?.ContextUsed);
+    TestAssert.Equal(0d, selectedB?.OutputTokensPerSecond);
+
+    monitor.SelectThread("99999999-9999-9999-9999-999999999999");
+    var empty = monitor.Poll();
+    TestAssert.Equal(0d, empty?.ContextUsed);
+    TestAssert.Equal(0d, empty?.CacheHitPercent);
+    TestAssert.Equal(0d, empty?.OutputTokensPerSecond);
+});
+
+Run("routes the most recently followed Codex conversation", () =>
+{
+    var router = new ActiveThreadRouter();
+    TestAssert.True(router.ApplyFollowing("client-a", "local", "thread-a", true));
+    TestAssert.Equal("thread-a", router.CurrentThreadId);
+    TestAssert.True(router.ApplyFollowing("client-b", "local", "thread-b", true));
+    TestAssert.Equal("thread-b", router.CurrentThreadId);
+    TestAssert.True(router.ApplyFollowing("client-a", "local", "thread-a", true));
+    TestAssert.Equal("thread-a", router.CurrentThreadId);
+    TestAssert.True(router.ApplyClientDisconnected("client-a"));
+    TestAssert.Equal("thread-b", router.CurrentThreadId);
+});
+
 Run("clamps an oversized line below the composer", () =>
 {
     var placed = OverlayPlacement.BelowComposer(
@@ -238,6 +283,14 @@ Run("does not include session total in usage segments", () =>
         SessionTotal: 10_000_000));
 
     TestAssert.True(!text.Contains("会话累计", StringComparison.Ordinal));
+});
+
+Run("renders a complete zero-metric line for an idle conversation", () =>
+{
+    var text = MetricsFormatter.Format(MetricsSnapshot.Empty);
+    TestAssert.Equal(
+        "上下文：0 tokens        缓存命中率：0%        输入：0        输出：0        输出速度：0 tok/s",
+        text);
 });
 
 Run("recognizes Microsoft Store and standalone Codex executables", () =>

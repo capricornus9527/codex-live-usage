@@ -14,13 +14,20 @@ public static class MetricsFormatter
         ArgumentNullException.ThrowIfNull(snapshot);
         var metrics = new List<(string Label, string Value)>(5);
 
-        if (snapshot.ContextUsed is not null && snapshot.ContextLimit is not null)
+        if (snapshot.ContextUsed is not null)
         {
-            var percent = snapshot.ContextPercent ??
-                Math.Clamp(snapshot.ContextUsed.Value / snapshot.ContextLimit.Value * 100, 0, 100);
-            metrics.Add((
-                "上下文",
-                $"{CompactCount(snapshot.ContextUsed.Value)}/{CompactLimit(snapshot.ContextLimit.Value)} ({FormatNumber(percent)}%)"));
+            if (snapshot.ContextLimit is not null)
+            {
+                var percent = snapshot.ContextPercent ??
+                    Math.Clamp(snapshot.ContextUsed.Value / snapshot.ContextLimit.Value * 100, 0, 100);
+                metrics.Add((
+                    "上下文",
+                    $"{CompactCount(snapshot.ContextUsed.Value)}/{CompactLimit(snapshot.ContextLimit.Value)} ({FormatNumber(percent)}%)"));
+            }
+            else
+            {
+                metrics.Add(("上下文", $"{CompactCount(snapshot.ContextUsed.Value)} tokens"));
+            }
         }
 
         if (snapshot.CacheHitPercent is not null)

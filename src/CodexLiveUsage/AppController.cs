@@ -7,12 +7,23 @@ namespace CodexLiveUsage;
 
 internal sealed class AppController : IDisposable
 {
+    private static readonly UsageLineStyle[] LineStyles =
+    [
+        new(FontSize: 12, LineHeight: 13.5, Gap: 2),
+        new(FontSize: 11, LineHeight: 12.5, Gap: 1),
+        new(FontSize: 10, LineHeight: 11.5, Gap: 1),
+        new(FontSize: 9, LineHeight: 10.5, Gap: 0),
+    ];
+
     private readonly RolloutMetricsMonitor _metricsMonitor;
+    private readonly CodexIpcActiveThreadMonitor _activeThreadMonitor;
     private readonly DispatcherTimer _timer;
     private UsageLineWindow? _line;
     private MetricsSnapshot? _snapshot;
     private IReadOnlyList<UsageSegment>? _segments;
     private DateTime _nextMetricsPollUtc = DateTime.MinValue;
+    private string? _observedThreadId;
+    private string? _lastConnectedThreadId;
     private bool _disposed;
 
     public AppController()
@@ -26,6 +37,7 @@ internal sealed class AppController : IDisposable
         }
 
         _metricsMonitor = new RolloutMetricsMonitor(codexHome);
+        _activeThreadMonitor = new CodexIpcActiveThreadMonitor();
         _timer = new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = TimeSpan.FromMilliseconds(500),
@@ -48,6 +60,7 @@ internal sealed class AppController : IDisposable
 
         _disposed = true;
         _timer.Stop();
+        _activeThreadMonitor.Dispose();
         _line?.Close();
         _line = null;
     }
@@ -61,6 +74,26 @@ internal sealed class AppController : IDisposable
 
         try
         {
+            var route = _activeThreadMonitor.GetStatus();
+            if (route.IsConnected && !string.IsNullOrWhiteSpace(route.ThreadId))
+            {
+                _lastConnectedThreadId = route.ThreadId;
+            }
+            else if (!route.IsConnected)
+            {
+                _lastConnectedThreadId = null;
+            }
+
+            var desiredThreadId = route.IsConnected
+                ? route.ThreadId ?? _lastConnectedThreadId
+                : null;
+            if (!string.Equals(_observedThreadId, desiredThreadId, StringComparison.OrdinalIgnoreCase))
+            {
+                _observedThreadId = desiredThreadId;
+                _metricsMonitor.SelectThread(desiredThreadId);
+                _nextMetricsPollUtc = DateTime.MinValue;
+            }
+
             if (DateTime.UtcNow >= _nextMetricsPollUtc)
             {
                 _snapshot = _metricsMonitor.Poll();
@@ -80,15 +113,23 @@ internal sealed class AppController : IDisposable
             var maximumWidthDip = Math.Max(
                 160,
                 composer.Value.Width / window.DpiScale - 8);
-            var sizeDip = _line.Render(_segments, maximumWidthDip);
-            var lineSize = new PixelSize(
-                Math.Max(1, (int)Math.Ceiling(sizeDip.Width * window.DpiScale)),
-                Math.Max(1, (int)Math.Ceiling(sizeDip.Height * window.DpiScale)));
-            var placement = OverlayPlacement.BelowComposer(
-                window.Bounds,
-                composer.Value,
-                lineSize,
-                2);
+            PixelRect? placement = null;
+            foreach (var style in LineStyles)
+            {
+                var sizeDip = _line.Render(_segments, maximumWidthDip, style);
+                var lineSize = new PixelSize(
+                    Math.Max(1, (int)Math.Ceiling(sizeDip.Width * window.DpiScale)),
+                    Math.Max(1, (int)Math.Ceiling(sizeDip.Height * window.DpiScale)));
+                placement = OverlayPlacement.BelowComposer(
+                    window.Bounds,
+                    composer.Value,
+                    lineSize,
+                    style.Gap);
+                if (placement is not null)
+                {
+                    break;
+                }
+            }
             if (placement is null)
             {
                 _line.HideWithoutActivation();

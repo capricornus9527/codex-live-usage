@@ -4,7 +4,7 @@
 
 **Goal:** Build and install a Windows companion that displays token usage in a transparent line fixed above the Codex composer without Codex++, MCP UI injection, CDP, or network access.
 
-**Architecture:** A boundary-focused .NET 9 core library parses incremental rollout JSONL and computes token metrics. A WPF `net9.0-windows` companion locates the Codex main window with Win32, locates the composer with UI Automation, and renders one transparent text line above it. A current-user login task starts the companion automatically.
+**Architecture:** A boundary-focused .NET 9 core library parses incremental rollout JSONL, routes the current Codex conversation through local IPC, and computes token metrics. A WPF `net9.0-windows` companion locates the composer with UI Automation and renders one adaptive transparent text line below it. A current-user login task starts the companion automatically.
 
 **Tech Stack:** C# 13, .NET 9, WPF, Win32 interop, Windows UI Automation, PowerShell 5.1/7, no third-party NuGet packages.
 
@@ -15,7 +15,8 @@
 - Windows 10/11 x64 only.
 - Target `net9.0-windows`; do not install Electron or extra runtime packages.
 - No network requests, API-key access, CDP, DOM injection, or Codex file modification.
-- Read only the latest `rollout-*.jsonl`; never persist conversation text.
+- Read the rollout for the currently selected conversation; fall back to the newest rollout only when IPC is unavailable.
+- Never persist conversation text.
 - The entire overlay window is fully transparent and click-through.
 - The usage line has no background, border, radius, padding, or shadow.
 - The line displays one fixed row centered below the composer; hide when no valid metric or composer anchor exists.
@@ -302,7 +303,7 @@ Update the plan checkboxes and README verification section with the exact comman
 
 Verified on 2026-10-25:
 
-- `scripts/build.ps1`: 17/17 C# tests passed, the PowerShell install
+- `scripts/build.ps1`: 20/20 C# tests passed, the PowerShell install
   test passed, Release publish completed with zero build warnings and zero
   errors.
 - `scripts/install.ps1`: task `Codex Live Usage Companion` is `Running`,
@@ -314,6 +315,10 @@ Verified on 2026-10-25:
   across minimize and restore. Codex was left restored.
 - Fixed-position test: the transparent line coordinates remained unchanged
   over a two-second metrics refresh interval.
+- Conversation-switch test: the line changed from `854.3K` context to
+  `102.4K`, reported `0 tok/s`, then restored to the original thread and data.
+- IPC routing test: captured `following=False` for the old conversation and
+  `following=True` for the newly selected conversation.
 - Final composer geometry: text center delta `0 px`, bottom gap `2 px`.
 - Compact-window regression: the line remains visible when only 23 px are
   available below the composer.
@@ -330,7 +335,7 @@ Verified on 2026-10-25:
 
 Remaining limitations:
 
-- The selected-session fallback uses the newest modified rollout; switching to
-  an idle conversation with no new writes may lag.
+- If Codex IPC is temporarily unavailable, the selected-session fallback uses
+  the newest modified rollout until the route reconnects.
 - Codex UI Automation and rollout schema are internal and may change.
 - The repository has no configured GitHub remote and has not been published.

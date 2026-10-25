@@ -16,6 +16,13 @@ internal static class Program
             return DiagnosticsProbe.Run(args[1]);
         }
 
+        if (args.Length == 3 &&
+            args[0] == "--ipc-watch" &&
+            int.TryParse(args[2], out var seconds))
+        {
+            return DiagnosticsProbe.WatchIpc(args[1], seconds);
+        }
+
         using var mutex = new Mutex(initiallyOwned: true, MutexName, out var createdNew);
         if (!createdNew)
         {

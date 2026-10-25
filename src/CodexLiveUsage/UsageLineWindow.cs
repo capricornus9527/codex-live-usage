@@ -55,9 +55,14 @@ internal sealed class UsageLineWindow : Window
         };
     }
 
-    public Size Render(IReadOnlyList<UsageSegment> segments, double maximumWidthDip)
+    public Size Render(
+        IReadOnlyList<UsageSegment> segments,
+        double maximumWidthDip,
+        UsageLineStyle style)
     {
         ApplyTheme();
+        _textBlock.FontSize = style.FontSize;
+        _textBlock.LineHeight = style.LineHeight;
         _textBlock.MaxWidth = Math.Max(80, maximumWidthDip);
         _textBlock.Inlines.Clear();
         foreach (var segment in segments)
@@ -73,7 +78,7 @@ internal sealed class UsageLineWindow : Window
         _textBlock.Measure(new Size(Math.Max(80, maximumWidthDip), double.PositiveInfinity));
         var desired = _textBlock.DesiredSize;
         Width = Math.Ceiling(Math.Max(120, desired.Width));
-        Height = Math.Ceiling(Math.Max(12, desired.Height));
+        Height = Math.Ceiling(Math.Max(style.FontSize, desired.Height));
         return new Size(Width, Height);
     }
 
@@ -130,3 +135,5 @@ internal sealed class UsageLineWindow : Window
         return brush;
     }
 }
+
+internal sealed record UsageLineStyle(double FontSize, double LineHeight, int Gap);

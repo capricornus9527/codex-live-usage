@@ -17,6 +17,7 @@ route:
 - Windows UI Automation locates the composer container's bottom edge.
 - A transparent WPF window renders one click-through text line.
 - Local rollout JSONL files provide numeric token metrics.
+- Local Codex IPC tracks the currently selected conversation.
 
 No Codex++, CDP, DOM injection, proxy, API key, or network request is used.
 
@@ -29,10 +30,13 @@ No Codex++, CDP, DOM injection, proxy, API key, or network request is used.
 - Centered below the composer with eight spaces between metrics.
 - Rendered as one fully opaque 12 px line using Codex's muted-gray text color.
 - Chinese labels use Microsoft YaHei; numbers and Latin text use Times New Roman.
+- Adaptively reduces to 11, 10, or 9 px when the window leaves less vertical space.
 - Context used/limit and percentage.
 - Cache hit rate.
 - Latest-turn input and output tokens.
 - Output speed in tokens per second.
+- Switches to the selected conversation's own rollout data, even when it is idle.
+- Shows `0 tok/s` immediately after a conversation switch until new output arrives.
 - Automatic login startup and Codex window following.
 - Hides when Codex is minimized, closes, has no composer anchor, or lacks
   bottom space for the line.
@@ -105,8 +109,10 @@ $CODEX_HOME\sessions
 
 If `CODEX_HOME` is unset, it uses `%USERPROFILE%\.codex\sessions`.
 
-Conversation content is never stored, logged, or transmitted. The optional
-diagnostics mode writes only numeric metrics and window rectangles:
+Conversation content is never stored, logged, or transmitted. The local
+`\\.\pipe\codex-ipc` connection is used only to identify the selected
+conversation ID. The optional diagnostics mode writes numeric metrics, thread
+IDs, and window rectangles:
 
 ```powershell
 CodexLiveUsage.exe --diagnostics .\diagnostics.json
@@ -140,8 +146,8 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Verification
 
-- 17 automated C# parser, placement, formatting, font-role, and window-matching
-  tests.
+- 20 automated C# parser, routing, placement, formatting, font-role,
+  zero-state, and window-matching tests.
 - PowerShell install validation for .NET 9 detection and directory publishing.
 - Release build completed with zero warnings and zero errors.
 - Real Codex window follow, minimize/restore hiding, and click-through styles
@@ -154,9 +160,8 @@ implementation details and can change. The tests cover parsing, placement,
 window matching, and font segmentation, but the end-to-end integration must be
 checked after significant Codex updates.
 
-The first version uses the most recently modified rollout. Switching to an idle
-conversation that has not written new token events may not immediately update
-the displayed session.
+If Codex IPC is temporarily unavailable, the companion falls back to the most
+recently modified rollout until the selected-conversation route reconnects.
 
 ## License
 

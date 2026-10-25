@@ -1,9 +1,15 @@
 # Third-Party Notices
 
-Codex Live Usage is an independent implementation. No source file from the
-projects below was copied into this repository.
+Codex Live Usage is an independent implementation. The current-conversation
+IPC monitor and active-thread router are adapted from
+`soleillevant0125/codex-token-overlay` under the MIT License. A copy of that
+license is included at:
 
-The following openly licensed projects informed the architecture and UX:
+```text
+licenses/soleillevant0125-MIT.txt
+```
+
+The following projects informed the architecture and UX:
 
 - [gkfriend/codex-usage-companion](https://github.com/gkfriend/codex-usage-companion),
   commit `7aa4643faeecda977d2bd59fca1a96fa3e85dd7b`, MIT License.

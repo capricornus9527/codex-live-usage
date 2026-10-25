@@ -11,6 +11,8 @@ details.
 The companion is designed to:
 
 - read only numeric token fields from local Codex rollout files;
+- connect read-only to the local Codex IPC pipe to identify the selected
+  conversation;
 - make no network requests;
 - avoid storing conversation content;
 - avoid modifying Codex files, login state, or configuration.

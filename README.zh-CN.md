@@ -19,6 +19,8 @@
 - 字号 12px、不透明度 100%，使用接近 Codex 思考状态的灰色。
 - 每项采用 `标签：数值`，项目之间使用 8 个空格。
 - 显示上下文用量和上限、缓存命中率、本轮输入输出、输出速度。
+- 切换到空闲对话后立即显示该对话自己的数据，输出速度先归零。
+- 根据窗口底部剩余空间，在 12/11/10/9px 字号之间自动压缩。
 - 自动跟随 Codex 窗口移动、最小化和恢复。
 - 本地只读，不联网、不读取 API Key，不上传对话内容。
 
@@ -34,6 +36,7 @@
 - Windows UI Automation 定位输入框外层容器。
 - WPF 透明度窗口绘制一行可点击穿透的文字。
 - 增量读取 `rollout-*.jsonl` 中的数字字段。
+- 通过 Codex 本机 IPC 跟踪当前选中的对话。
 
 不依赖 Codex++，不使用 CDP、DOM 注入、代理或网络服务。
 
@@ -115,9 +118,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\InstallScript.Tests.
 
 ## 兼容性
 
-Codex Desktop 的 rollout JSONL 结构和 UI Automation 结构属于内部实现，未来版本可能变化。当前测试覆盖解析、增量读取、定位、字体分段和窗口匹配，但对新版 Codex 仍应执行实际界面验证。
+Codex Desktop 的 rollout JSONL、本机 IPC 和 UI Automation 结构属于内部实现，未来版本可能变化。当前测试覆盖解析、会话路由、增量读取、定位、字体分段和窗口匹配，但对新版 Codex 仍应执行实际界面验证。
 
-首版使用最近修改的 rollout；切换到一个没有新写入的空闲对话时，显示数据可能不会立刻更新。
+如果 Codex 本机 IPC 暂时不可用，程序会回退到最近修改的 rollout；IPC 恢复后会自动回到当前选中的对话。
 
 ## 许可证
 

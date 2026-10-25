@@ -16,7 +16,7 @@
   "interface": {
     "displayName": "Codex 常驻用量",
     "shortDescription": "在 Codex 输入框下方居中显示本地 token 用量。",
-    "longDescription": "使用独立透明伴随窗口在输入框下方显示上下文、缓存命中率、输入输出和输出速度。不联网、不修改 Codex，也不依赖 Codex++。",
+    "longDescription": "使用独立透明伴随窗口在输入框下方显示当前选中对话的上下文、缓存命中率、输入输出和输出速度。不联网、不修改 Codex，也不依赖 Codex++。",
     "developerName": "Codex Live Usage contributors",
     "category": "Developer Tools",
     "capabilities": [

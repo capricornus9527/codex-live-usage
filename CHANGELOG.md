@@ -8,6 +8,9 @@ All notable changes to this project will be documented in this file.
 
 - Transparent single-line usage display fixed below the Codex composer.
 - Context used/limit, cache hit rate, input/output tokens, and output speed.
+- Current-conversation tracking through local Codex IPC, including idle
+  conversation switches and an immediate `0 tok/s` state.
+- Adaptive 12/11/10/9 px text sizes based on available composer space.
 - Chinese labels with Microsoft YaHei and numeric values with Times New Roman.
 - Automatic login startup and Codex window following.
 - Click-through, no-activation overlay behavior.

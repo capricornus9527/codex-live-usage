@@ -9,4 +9,16 @@ public sealed record MetricsSnapshot(
     double? LastOutput,
     double? LastTotal,
     double? OutputTokensPerSecond,
-    double? SessionTotal);
+    double? SessionTotal)
+{
+    public static MetricsSnapshot Empty { get; } = new(
+        ContextUsed: 0,
+        ContextLimit: null,
+        ContextPercent: null,
+        CacheHitPercent: 0,
+        LastInput: 0,
+        LastOutput: 0,
+        LastTotal: 0,
+        OutputTokensPerSecond: 0,
+        SessionTotal: 0);
+}
