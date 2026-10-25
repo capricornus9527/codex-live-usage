@@ -1,0 +1,20 @@
+# .NET build output
+**/bin/
+**/obj/
+artifacts/
+
+# IDE-local state
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Local runtime and diagnostics
+*.log
+install-state.json
+settings.json
+
+# OS metadata
+Thumbs.db
+Desktop.ini
+.DS_Store
