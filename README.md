@@ -15,6 +15,8 @@ different technical route:
 
 No Codex++, CDP, DOM injection, proxy, API key, or network request is used.
 
+![Codex Live Usage badge](docs/images/badge.png)
+
 ## Features
 
 - Original compact badge style: teal border, subtle teal background, 7 px
