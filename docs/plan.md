@@ -37,7 +37,7 @@
 - Produces: `RolloutMetricsParser.Parse(IEnumerable<string> lines) -> MetricsSnapshot?`
 - Produces: `MetricsSnapshot` with `ContextUsed`, `ContextLimit`, `ContextPercent`, `CacheHitPercent`, `LastInput`, `LastOutput`, `LastTotal`, `OutputTokensPerSecond`, and `SessionTotal`.
 
-- [ ] **Step 1: Write failing parser tests**
+- [x] **Step 1: Write failing parser tests**
 
 ```csharp
 var snapshot = RolloutMetricsParser.Parse(new[]
@@ -54,7 +54,7 @@ Assert.Equal(15d, snapshot.OutputTokensPerSecond);
 Assert.Equal(440d, snapshot.SessionTotal);
 ```
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Run:
 
@@ -64,11 +64,11 @@ dotnet run --project .\codex-plugins\codex-live-usage\tests\CodexLiveUsage.Tests
 
 Expected: compilation fails because `RolloutMetricsParser` and `MetricsSnapshot` do not exist.
 
-- [ ] **Step 3: Implement the core parser**
+- [x] **Step 3: Implement the core parser**
 
 Parse only `event_msg` / `token_count` objects. Require finite non-negative `last_token_usage.total_tokens`; ignore malformed lines and unknown fields. Use cumulative output deltas between the two latest valid timestamps for speed.
 
-- [ ] **Step 4: Add edge-case tests**
+- [x] **Step 4: Add edge-case tests**
 
 ```csharp
 Assert.Null(RolloutMetricsParser.Parse(new[] { "{not-json" }));
@@ -77,7 +77,7 @@ Assert.Equal(0d, snapshot.ContextPercent); // null context limit
 Assert.Equal(100d, snapshot.CacheHitPercent); // clamp cached/input above 100
 ```
 
-- [ ] **Step 5: Run all tests and verify GREEN**
+- [x] **Step 5: Run all tests and verify GREEN**
 
 Run the Task 1 command. Expected: all assertions pass and process exits `0`.
 
