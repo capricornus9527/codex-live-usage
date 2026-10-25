@@ -261,7 +261,7 @@ Expected: no parser errors.
 **Interfaces:**
 - Consumes: all prior tasks.
 
-- [ ] **Step 1: Run the complete automated suite**
+- [x] **Step 1: Run the complete automated suite**
 
 ```powershell
 dotnet run --project .\codex-plugins\codex-live-usage\tests\CodexLiveUsage.Tests\CodexLiveUsage.Tests.csproj -c Release
@@ -270,11 +270,11 @@ dotnet build .\codex-plugins\codex-live-usage\src\CodexLiveUsage\CodexLiveUsage.
 
 Expected: tests exit `0`; build has zero errors and zero warnings.
 
-- [ ] **Step 2: Install and start**
+- [x] **Step 2: Install and start**
 
 Run `scripts/install.ps1`. Verify task state is `Running`, process count is one, and no separate taskbar entry appears.
 
-- [ ] **Step 3: Verify real Codex integration**
+- [x] **Step 3: Verify real Codex integration**
 
 Keep Codex visible with the current conversation. Capture a screenshot and verify:
 
@@ -286,14 +286,44 @@ Keep Codex visible with the current conversation. Capture a screenshot and verif
 - badge hides on minimize and recovers on restore;
 - text does not overlap reply content or composer.
 
-- [ ] **Step 4: Verify partial data and missing anchor**
+- [x] **Step 4: Verify partial data and missing anchor**
 
 Append half a JSON line to a temporary fixture and confirm the prior text remains. Move to a conversation with no metrics and confirm the badge hides instead of showing zero/waiting text.
 
-- [ ] **Step 5: Verify uninstall**
+- [x] **Step 5: Verify uninstall**
 
 Run `scripts/uninstall.ps1`. Confirm the scheduled task, process, install state, and build output are gone; confirm Codex session files still exist and are unchanged.
 
-- [ ] **Step 6: Record results**
+- [x] **Step 6: Record results**
 
 Update the plan checkboxes and README verification section with the exact commands, pass counts, task state, screenshot path, and any remaining limitations.
+
+## Verification Results
+
+Verified on 2026-10-25:
+
+- `scripts/build.ps1`: 15/15 C# tests passed, the PowerShell install
+  test passed, Release publish completed with zero build warnings and zero
+  errors.
+- `scripts/install.ps1`: task `Codex Live Usage Companion` is `Running`,
+  exactly one `CodexLiveUsage.exe` process is active, and the installed
+  executable is under `%LOCALAPPDATA%\CodexLiveUsage\app`.
+- Codex move test: moving Codex by `40×20` physical pixels moved the badge by
+  `40×20`; restoring Codex restored the badge to `0×0` delta.
+- Codex minimize test: overlay visibility changed `True -> False -> True`
+  across minimize and restore. Codex was left restored.
+- Window styles: `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`, and
+  `WS_EX_TOOLWINDOW` are enabled; the Codex main window is the overlay owner.
+- Visual check: badge-only preview is committed at
+  `docs/images/badge.png`; no conversation content is included.
+- Plugin marketplace: `codex-live-usage@personal` is installed and enabled.
+- Uninstall regression: login task, process, LocalAppData install, and build
+  artifacts were removed; Codex sessions and config remained intact. The final
+  build was then reinstalled.
+
+Remaining limitations:
+
+- The selected-session fallback uses the newest modified rollout; switching to
+  an idle conversation with no new writes may lag.
+- Codex UI Automation and rollout schema are internal and may change.
+- The repository has no configured GitHub remote and has not been published.

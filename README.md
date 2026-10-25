@@ -120,10 +120,19 @@ Direct test command:
 
 ```powershell
 dotnet run --project .\tests\CodexLiveUsage.Tests\CodexLiveUsage.Tests.csproj -c Release
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\InstallScript.Tests.ps1
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) before
 submitting changes.
+
+## Verification
+
+- 15 automated C# parser, placement, formatting, and window-matching tests.
+- PowerShell install validation for .NET 9 detection and directory publishing.
+- Release build completed with zero warnings and zero errors.
+- Real Codex window follow, minimize/restore hiding, and click-through styles
+  were verified on Windows 11 with the Microsoft Store build.
 
 ## Compatibility
 

@@ -12,6 +12,7 @@ Run the automated checks:
 
 ```powershell
 dotnet run --project .\tests\CodexLiveUsage.Tests\CodexLiveUsage.Tests.csproj
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\InstallScript.Tests.ps1
 dotnet build .\src\CodexLiveUsage\CodexLiveUsage.csproj -c Release
 ```
 
