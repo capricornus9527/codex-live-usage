@@ -116,6 +116,9 @@ dotnet run --project .\tests\CodexLiveUsage.Tests\CodexLiveUsage.Tests.csproj -c
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\InstallScript.Tests.ps1
 ```
 
+遇到对话切换或用量行显示问题，请查看
+[故障排查](docs/troubleshooting.md)。
+
 ## 兼容性
 
 Codex Desktop 的 rollout JSONL、本机 IPC 和 UI Automation 结构属于内部实现，未来版本可能变化。当前测试覆盖解析、会话路由、增量读取、定位、字体分段和窗口匹配，但对新版 Codex 仍应执行实际界面验证。

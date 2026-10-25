@@ -144,6 +144,9 @@ submitting changes.
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.
 
+See [docs/troubleshooting.md](docs/troubleshooting.md) for current-conversation
+IPC and adaptive-layout diagnostics.
+
 ## Verification
 
 - 20 automated C# parser, routing, placement, formatting, font-role,
