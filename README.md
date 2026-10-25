@@ -2,6 +2,9 @@
 
 English | [简体中文](README.zh-CN.md)
 
+[![CI](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A local Windows companion that keeps Codex token usage in a fixed, transparent
 line directly below the composer.
 
@@ -49,6 +52,8 @@ files or configuration.
 From the repository root:
 
 ```powershell
+git clone https://github.com/capricornus9527/codex-live-usage.git
+cd codex-live-usage
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 

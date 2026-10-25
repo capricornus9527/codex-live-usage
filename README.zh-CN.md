@@ -2,6 +2,9 @@
 
 [English](README.md) | 简体中文
 
+[![CI](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 一个本地 Windows 伴随工具，在 Codex 输入框下方显示固定、透明的一行 token 用量。
 
 > 非 OpenAI 官方项目，与 OpenAI 没有隶属、赞助或背书关系。
@@ -45,6 +48,8 @@
 在仓库根目录运行：
 
 ```powershell
+git clone https://github.com/capricornus9527/codex-live-usage.git
+cd codex-live-usage
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ```
 
