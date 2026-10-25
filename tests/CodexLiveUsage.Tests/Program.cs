@@ -65,6 +65,52 @@ Run("clamps cache hit percentage to 100", () =>
     TestAssert.Equal(100d, RolloutMetricsParser.Parse([oversizedCache])?.CacheHitPercent);
 });
 
+Run("reads only complete appended rollout lines", () =>
+{
+    using var directory = TestDirectory.Create();
+    var sessions = Path.Combine(directory.Path, "sessions", "2026", "10", "25");
+    Directory.CreateDirectory(sessions);
+    var rollout = Path.Combine(sessions, "rollout-incremental.jsonl");
+    File.WriteAllText(rollout, FirstEvent + Environment.NewLine);
+
+    var monitor = new RolloutMetricsMonitor(directory.Path);
+    TestAssert.Equal(110d, monitor.Poll()?.ContextUsed);
+
+    var splitAt = Math.Min(48, SecondEvent.Length);
+    File.AppendAllText(rollout, SecondEvent[..splitAt]);
+    TestAssert.Equal(110d, monitor.Poll()?.ContextUsed);
+
+    File.AppendAllText(rollout, SecondEvent[splitAt..] + Environment.NewLine);
+    var latest = monitor.Poll();
+    TestAssert.Equal(330d, latest?.ContextUsed);
+    TestAssert.Equal(15d, latest?.OutputTokensPerSecond);
+});
+
+Run("switches rollout files and resets after truncation", () =>
+{
+    using var directory = TestDirectory.Create();
+    var sessions = Path.Combine(directory.Path, "sessions", "2026", "10", "25");
+    Directory.CreateDirectory(sessions);
+    var firstFile = Path.Combine(sessions, "rollout-first.jsonl");
+    var secondFile = Path.Combine(sessions, "rollout-second.jsonl");
+    File.WriteAllText(firstFile, FirstEvent + Environment.NewLine);
+    File.SetLastWriteTimeUtc(firstFile, new DateTime(2026, 10, 25, 0, 0, 0, DateTimeKind.Utc));
+
+    var monitor = new RolloutMetricsMonitor(directory.Path);
+    TestAssert.Equal(110d, monitor.Poll()?.ContextUsed);
+
+    File.WriteAllText(secondFile, SecondEvent + Environment.NewLine);
+    File.SetLastWriteTimeUtc(secondFile, new DateTime(2026, 10, 25, 0, 1, 0, DateTimeKind.Utc));
+    TestAssert.Equal(330d, monitor.Poll()?.ContextUsed);
+
+    const string shorterEvent =
+        """{"timestamp":"2026-10-25T00:02:00Z","type":"event_msg","payload":{"type":"token_count","info":{"last_token_usage":{"total_tokens":1500},"total_token_usage":{"total_tokens":1500},"model_context_window":2000}}}""";
+    File.WriteAllText(secondFile, shorterEvent + Environment.NewLine);
+    File.SetLastWriteTimeUtc(secondFile, new DateTime(2026, 10, 25, 0, 2, 0, DateTimeKind.Utc));
+    TestAssert.Equal(1500d, monitor.Poll()?.ContextUsed);
+    TestAssert.Equal(75d, monitor.Poll()?.ContextPercent);
+});
+
 if (failures.Count > 0)
 {
     Console.Error.WriteLine();
@@ -98,6 +144,34 @@ static class TestAssert
         if (actual is not null)
         {
             throw new InvalidOperationException($"Expected null, got {actual}.");
+        }
+    }
+}
+
+sealed class TestDirectory : IDisposable
+{
+    private TestDirectory(string path)
+    {
+        Path = path;
+    }
+
+    public string Path { get; }
+
+    public static TestDirectory Create()
+    {
+        var path = System.IO.Path.Combine(
+            System.IO.Path.GetTempPath(),
+            "codex-live-usage-tests",
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(path);
+        return new TestDirectory(path);
+    }
+
+    public void Dispose()
+    {
+        if (Directory.Exists(Path))
+        {
+            Directory.Delete(Path, recursive: true);
         }
     }
 }

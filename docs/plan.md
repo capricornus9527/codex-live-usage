@@ -91,23 +91,23 @@ Run the Task 1 command. Expected: all assertions pass and process exits `0`.
 - Produces: `RolloutMetricsMonitor.Poll() -> MetricsSnapshot?`
 - Produces: `new RolloutMetricsMonitor(string codexHome)`.
 
-- [ ] **Step 1: Write a failing incremental-read test**
+- [x] **Step 1: Write a failing incremental-read test**
 
 Create a temporary `sessions/2026/10/25/rollout-test.jsonl`, append one valid token event, call `Poll()`, append a second event, call `Poll()`, then assert the latest values and computed speed. Append half a JSON line, assert the previous snapshot remains unchanged, append the remaining line with `\n`, and assert the new snapshot appears.
 
-- [ ] **Step 2: Run tests and verify RED**
+- [x] **Step 2: Run tests and verify RED**
 
 Expected: compilation fails because `RolloutMetricsMonitor` does not exist.
 
-- [ ] **Step 3: Implement incremental reading**
+- [x] **Step 3: Implement incremental reading**
 
 Find the newest root `rollout-*.jsonl` by last-write time. Cache the file path, length, and pending partial line. Read only appended bytes. Reset state when the file shrinks or changes identity. Parse complete lines only.
 
-- [ ] **Step 4: Add rotation and malformed-line tests**
+- [x] **Step 4: Add rotation and malformed-line tests**
 
 Write a newer rollout file and assert `Poll()` switches files. Replace the file with a shorter valid file and assert state resets rather than reusing the old offset.
 
-- [ ] **Step 5: Run tests and verify GREEN**
+- [x] **Step 5: Run tests and verify GREEN**
 
 Run the Task 1 command. Expected: all parser, partial-line, and rotation tests pass.
 
