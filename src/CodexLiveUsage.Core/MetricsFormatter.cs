@@ -6,43 +6,55 @@ public static class MetricsFormatter
 {
     public static string Format(MetricsSnapshot snapshot)
     {
+        return string.Concat(FormatSegments(snapshot).Select(segment => segment.Text));
+    }
+
+    public static IReadOnlyList<UsageSegment> FormatSegments(MetricsSnapshot snapshot)
+    {
         ArgumentNullException.ThrowIfNull(snapshot);
-        var parts = new List<string>(6);
+        var metrics = new List<(string Label, string Value)>(5);
 
         if (snapshot.ContextUsed is not null && snapshot.ContextLimit is not null)
         {
             var percent = snapshot.ContextPercent ??
                 Math.Clamp(snapshot.ContextUsed.Value / snapshot.ContextLimit.Value * 100, 0, 100);
-            parts.Add(
-                $"上下文 {CompactCount(snapshot.ContextUsed.Value)}/{CompactLimit(snapshot.ContextLimit.Value)} ({FormatNumber(percent)}%)");
+            metrics.Add((
+                "上下文",
+                $"{CompactCount(snapshot.ContextUsed.Value)}/{CompactLimit(snapshot.ContextLimit.Value)} ({FormatNumber(percent)}%)"));
         }
 
         if (snapshot.CacheHitPercent is not null)
         {
-            parts.Add($"缓存命中率 {FormatNumber(snapshot.CacheHitPercent.Value)}%");
+            metrics.Add(("缓存命中率", $"{FormatNumber(snapshot.CacheHitPercent.Value)}%"));
         }
 
         if (snapshot.LastInput is not null)
         {
-            parts.Add($"输入 {CompactCount(snapshot.LastInput.Value)}");
+            metrics.Add(("输入", CompactCount(snapshot.LastInput.Value)));
         }
 
         if (snapshot.LastOutput is not null)
         {
-            parts.Add($"输出 {CompactCount(snapshot.LastOutput.Value)}");
+            metrics.Add(("输出", CompactCount(snapshot.LastOutput.Value)));
         }
 
         if (snapshot.OutputTokensPerSecond is not null)
         {
-            parts.Add($"输出速度 {FormatNumber(snapshot.OutputTokensPerSecond.Value)} tok/s");
+            metrics.Add(("输出速度", $"{FormatNumber(snapshot.OutputTokensPerSecond.Value)} tok/s"));
         }
 
-        if (snapshot.SessionTotal is not null)
+        var segments = new List<UsageSegment>(metrics.Count * 2 + Math.Max(0, metrics.Count - 1));
+        for (var index = 0; index < metrics.Count; index++)
         {
-            parts.Add($"会话累计 {CompactCount(snapshot.SessionTotal.Value)}");
+            segments.Add(new UsageSegment($"{metrics[index].Label}：", UsageFontRole.ChineseLabel));
+            segments.Add(new UsageSegment(metrics[index].Value, UsageFontRole.LatinValue));
+            if (index < metrics.Count - 1)
+            {
+                segments.Add(new UsageSegment("      ", UsageFontRole.ChineseLabel));
+            }
         }
 
-        return string.Join(" · ", parts);
+        return segments;
     }
 
     private static string CompactCount(double value)

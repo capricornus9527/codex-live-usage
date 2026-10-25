@@ -21,7 +21,7 @@ internal static class DiagnosticsProbe
 
             var snapshot = new RolloutMetricsMonitor(codexHome).Poll();
             var window = CodexWindowLocator.Find();
-            var anchor = window is null ? null : AssistantAnchorFinder.Find(window);
+            var composer = window is null ? null : ComposerLocator.Find(window);
             var payload = new
             {
                 codexHome,
@@ -35,13 +35,7 @@ internal static class DiagnosticsProbe
                         window.Bounds,
                         window.DpiScale,
                     },
-                anchor = anchor is null
-                    ? null
-                    : new
-                    {
-                        textBounds = anchor.TextBounds,
-                        composerBounds = anchor.ComposerBounds,
-                    },
+                composer,
             };
             File.WriteAllText(
                 outputPath,

@@ -8,8 +8,9 @@ description: Install, start, inspect, or uninstall the local Codex Live Usage Wi
 Use this skill only when the user asks to install, start, inspect, or uninstall
 the Codex Live Usage companion.
 
-The companion is a local Win32/WPF process. It is not an MCP app, does not call
-the model, and does not modify Codex files.
+The companion is a local Win32/WPF process that renders a transparent line above
+the Codex composer. It is not an MCP app, does not call the model, and does not
+modify Codex files.
 
 ## Install
 

@@ -9,9 +9,9 @@ internal sealed class AppController : IDisposable
 {
     private readonly RolloutMetricsMonitor _metricsMonitor;
     private readonly DispatcherTimer _timer;
-    private UsageBadgeWindow? _badge;
+    private UsageLineWindow? _line;
     private MetricsSnapshot? _snapshot;
-    private string? _text;
+    private IReadOnlyList<UsageSegment>? _segments;
     private DateTime _nextMetricsPollUtc = DateTime.MinValue;
     private bool _disposed;
 
@@ -48,8 +48,8 @@ internal sealed class AppController : IDisposable
 
         _disposed = true;
         _timer.Stop();
-        _badge?.Close();
-        _badge = null;
+        _line?.Close();
+        _line = null;
     }
 
     private void Refresh()
@@ -64,53 +64,45 @@ internal sealed class AppController : IDisposable
             if (DateTime.UtcNow >= _nextMetricsPollUtc)
             {
                 _snapshot = _metricsMonitor.Poll();
-                _text = _snapshot is null ? null : MetricsFormatter.Format(_snapshot);
+                _segments = _snapshot is null ? null : MetricsFormatter.FormatSegments(_snapshot);
                 _nextMetricsPollUtc = DateTime.UtcNow.AddSeconds(1);
             }
 
             var window = CodexWindowLocator.Find();
-            var anchor = window is null ? null : AssistantAnchorFinder.Find(window);
-            if (window is null || anchor is null || string.IsNullOrWhiteSpace(_text))
+            var composer = window is null ? null : ComposerLocator.Find(window);
+            if (window is null || composer is null || _segments is null || _segments.Count == 0)
             {
-                _badge?.HideWithoutActivation();
+                _line?.HideWithoutActivation();
                 return;
             }
 
-            _badge ??= new UsageBadgeWindow();
+            _line ??= new UsageLineWindow();
             var maximumWidthDip = Math.Max(
                 160,
-                (window.Bounds.Right - anchor.TextBounds.Left) / window.DpiScale - 24);
-            var sizeDip = _badge.Render(_text, maximumWidthDip);
-            var badgeSize = new PixelSize(
+                composer.Value.Width / window.DpiScale - 8);
+            var sizeDip = _line.Render(_segments, maximumWidthDip);
+            var lineSize = new PixelSize(
                 Math.Max(1, (int)Math.Ceiling(sizeDip.Width * window.DpiScale)),
                 Math.Max(1, (int)Math.Ceiling(sizeDip.Height * window.DpiScale)));
-            var contentHeight = Math.Max(1, anchor.ComposerBounds.Top - window.Bounds.Top);
-            var contentHost = new PixelRect(
-                window.Bounds.Left,
-                window.Bounds.Top,
-                window.Bounds.Width,
-                contentHeight);
-            var placement =
-                OverlayPlacement.BelowAnchor(contentHost, anchor.TextBounds, badgeSize, 6) ??
-                OverlayPlacement.FallbackAboveComposer(
-                    window.Bounds,
-                    anchor.ComposerBounds,
-                    badgeSize,
-                    6);
+            var placement = OverlayPlacement.BelowComposer(
+                window.Bounds,
+                composer.Value,
+                lineSize,
+                3);
             if (placement is null)
             {
-                _badge.HideWithoutActivation();
+                _line.HideWithoutActivation();
                 return;
             }
 
-            _badge.ShowAt(window.Handle, placement.Value, window.DpiScale);
+            _line.ShowAt(window.Handle, placement.Value, window.DpiScale);
         }
         catch (Exception error) when (
             error is InvalidOperationException or
             System.Runtime.InteropServices.COMException or
             System.Windows.Automation.ElementNotAvailableException)
         {
-            _badge?.HideWithoutActivation();
+            _line?.HideWithoutActivation();
         }
     }
 }

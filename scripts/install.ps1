@@ -23,7 +23,7 @@ if ($LASTEXITCODE -ne 0 -or -not (Test-WindowsDesktopRuntime9 $runtime)) {
     throw 'Microsoft Windows Desktop Runtime 9.x is required.'
 }
 
-if (-not $NoBuild -and -not (Test-Path -LiteralPath $sourceExe -PathType Leaf)) {
+if (-not $NoBuild) {
     & (Join-Path $PSScriptRoot 'build.ps1')
     if ($LASTEXITCODE -ne 0) {
         throw 'Build failed.'
@@ -81,7 +81,7 @@ Register-ScheduledTask `
     -Trigger $trigger `
     -Principal $principal `
     -Settings $settings `
-    -Description 'Shows local Codex token usage below the latest assistant reply.' `
+    -Description 'Shows local Codex token usage in a centered transparent line below the composer.' `
     -Force | Out-Null
 
 if (-not $NoStart) {

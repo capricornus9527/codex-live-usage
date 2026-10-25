@@ -1,33 +1,36 @@
 # Codex Live Usage
 
-A local Windows companion that keeps Codex token usage visible below the latest
-assistant response.
+A local Windows companion that keeps Codex token usage in a fixed, transparent
+line directly below the composer.
 
 > Unofficial community project. Not affiliated with or endorsed by OpenAI.
 
-The overlay reproduces the compact Codex++ token badge style while using a
-different technical route:
+The overlay keeps the Codex++ metric names while using a different technical
+route:
 
 - Win32 locates and follows the Codex Desktop window.
-- Windows UI Automation locates the latest assistant response and composer.
-- A transparent WPF window renders one click-through badge.
+- Windows UI Automation locates the composer container's bottom edge.
+- A transparent WPF window renders one click-through text line.
 - Local rollout JSONL files provide numeric token metrics.
 
 No Codex++, CDP, DOM injection, proxy, API key, or network request is used.
 
-![Codex Live Usage badge](docs/images/badge.png)
+![Codex Live Usage line](docs/images/usage-line.png)
 
 ## Features
 
-- Original compact badge style: teal border, subtle teal background, 7 px
-  radius, 12 px single-line text, and 90% opacity.
+- Fixed position directly below the Codex composer.
+- Fully transparent background with no border, card, or separator symbols.
+- Centered below the composer with six spaces between metrics.
+- Rendered as one 12 px line at 90% opacity.
+- Chinese labels use Microsoft YaHei; numbers and Latin text use Times New Roman.
 - Context used/limit and percentage.
 - Cache hit rate.
 - Latest-turn input and output tokens.
 - Output speed in tokens per second.
-- Session total tokens.
 - Automatic login startup and Codex window following.
-- Hides when Codex is minimized, closes, or has no valid assistant anchor.
+- Hides when Codex is minimized, closes, has no composer anchor, or lacks
+  bottom space for the line.
 - Read-only local operation with no telemetry.
 
 ## Requirements
@@ -60,17 +63,17 @@ No administrator permission is required.
 
 ## Use
 
-Open Codex Desktop and select a conversation with token data. The badge appears
-below the latest assistant response. It follows the Codex window automatically.
+Open Codex Desktop and select a conversation with token data. The line appears
+directly below the composer and follows the Codex window automatically.
 
 Example:
 
 ```text
-上下文 110.9K/1.0M (10.6%) · 缓存命中率 92% · 输入 108K · 输出 146 · 输出速度 33.5 tok/s · 会话累计 1.16M
+上下文：110.9K/1.0M (10.6%)      缓存命中率：92%      输入：108K      输出：146      输出速度：33.5 tok/s
 ```
 
-The badge hides rather than showing invented zero values when no valid metric
-or assistant anchor is available.
+The line hides rather than showing invented zero values when no valid metric
+or composer anchor is available.
 
 ## Uninstall
 
@@ -128,7 +131,8 @@ submitting changes.
 
 ## Verification
 
-- 15 automated C# parser, placement, formatting, and window-matching tests.
+- 16 automated C# parser, placement, formatting, font-role, and window-matching
+  tests.
 - PowerShell install validation for .NET 9 detection and directory publishing.
 - Release build completed with zero warnings and zero errors.
 - Real Codex window follow, minimize/restore hiding, and click-through styles
@@ -138,7 +142,7 @@ submitting changes.
 
 Codex Desktop's rollout JSONL schema and UI Automation structure are internal
 implementation details and can change. The tests cover parsing, placement,
-window matching, and UI-status filtering, but the end-to-end integration must be
+window matching, and font segmentation, but the end-to-end integration must be
 checked after significant Codex updates.
 
 The first version uses the most recently modified rollout. Switching to an idle

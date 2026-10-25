@@ -9,16 +9,13 @@ using Microsoft.Win32;
 
 namespace CodexLiveUsage;
 
-internal sealed class UsageBadgeWindow : Window
+internal sealed class UsageLineWindow : Window
 {
-    private static readonly Brush BadgeBackground = FrozenBrush(Color.FromArgb(20, 20, 184, 166));
-    private static readonly Brush BadgeBorder = FrozenBrush(Color.FromArgb(77, 20, 184, 166));
     private readonly TextBlock _textBlock;
-    private readonly Border _badge;
     private IntPtr _handle;
     private IntPtr _owner;
 
-    public UsageBadgeWindow()
+    public UsageLineWindow()
     {
         WindowStyle = WindowStyle.None;
         AllowsTransparency = true;
@@ -35,31 +32,21 @@ internal sealed class UsageBadgeWindow : Window
 
         _textBlock = new TextBlock
         {
-            FontFamily = new FontFamily("Segoe UI, Microsoft YaHei UI"),
+            FontFamily = new FontFamily("Microsoft YaHei UI"),
             FontSize = 12,
             FontWeight = FontWeights.Normal,
-            LineHeight = 16.2,
+            LineHeight = 14,
             LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
             VerticalAlignment = VerticalAlignment.Center,
+            Opacity = 0.9,
         };
         TextOptions.SetTextFormattingMode(_textBlock, TextFormattingMode.Display);
         TextOptions.SetTextRenderingMode(_textBlock, TextRenderingMode.Grayscale);
         TextOptions.SetTextHintingMode(_textBlock, TextHintingMode.Fixed);
         Typography.SetNumeralAlignment(_textBlock, FontNumeralAlignment.Tabular);
-
-        _badge = new Border
-        {
-            Background = BadgeBackground,
-            BorderBrush = BadgeBorder,
-            BorderThickness = new Thickness(1),
-            CornerRadius = new CornerRadius(7),
-            Padding = new Thickness(9, 5, 9, 5),
-            Opacity = 0.9,
-            Child = _textBlock,
-        };
-        Content = _badge;
+        Content = _textBlock;
 
         SourceInitialized += (_, _) =>
         {
@@ -68,15 +55,25 @@ internal sealed class UsageBadgeWindow : Window
         };
     }
 
-    public Size Render(string text, double maximumWidthDip)
+    public Size Render(IReadOnlyList<UsageSegment> segments, double maximumWidthDip)
     {
         ApplyTheme();
-        _textBlock.MaxWidth = Math.Max(80, maximumWidthDip - 18);
-        _textBlock.Text = text;
-        _badge.Measure(new Size(Math.Max(80, maximumWidthDip), double.PositiveInfinity));
-        var desired = _badge.DesiredSize;
-        Width = Math.Ceiling(Math.Max(80, desired.Width));
-        Height = Math.Ceiling(Math.Max(26, desired.Height));
+        _textBlock.MaxWidth = Math.Max(80, maximumWidthDip);
+        _textBlock.Inlines.Clear();
+        foreach (var segment in segments)
+        {
+            _textBlock.Inlines.Add(new Run(segment.Text)
+            {
+                FontFamily = segment.FontRole == UsageFontRole.ChineseLabel
+                    ? new FontFamily("Microsoft YaHei UI")
+                    : new FontFamily("Times New Roman"),
+            });
+        }
+
+        _textBlock.Measure(new Size(Math.Max(80, maximumWidthDip), double.PositiveInfinity));
+        var desired = _textBlock.DesiredSize;
+        Width = Math.Ceiling(Math.Max(120, desired.Width));
+        Height = Math.Ceiling(Math.Max(15, desired.Height));
         return new Size(Width, Height);
     }
 

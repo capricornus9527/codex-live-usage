@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build and install a Windows companion that displays Codex++-style token usage under the latest Codex assistant reply without Codex++, MCP UI injection, CDP, or network access.
+**Goal:** Build and install a Windows companion that displays token usage in a transparent line fixed above the Codex composer without Codex++, MCP UI injection, CDP, or network access.
 
-**Architecture:** A boundary-focused .NET 9 core library parses incremental rollout JSONL and computes token metrics. A WPF `net9.0-windows` companion locates the Codex main window with Win32, locates the latest assistant reply with UI Automation, and renders one transparent badge in the original Codex++ style. A current-user login task starts the companion automatically.
+**Architecture:** A boundary-focused .NET 9 core library parses incremental rollout JSONL and computes token metrics. A WPF `net9.0-windows` companion locates the Codex main window with Win32, locates the composer with UI Automation, and renders one transparent text line above it. A current-user login task starts the companion automatically.
 
 **Tech Stack:** C# 13, .NET 9, WPF, Win32 interop, Windows UI Automation, PowerShell 5.1/7, no third-party NuGet packages.
 
@@ -16,9 +16,10 @@
 - Target `net9.0-windows`; do not install Electron or extra runtime packages.
 - No network requests, API-key access, CDP, DOM injection, or Codex file modification.
 - Read only the latest `rollout-*.jsonl`; never persist conversation text.
-- Badge outer window is fully transparent and click-through.
-- Badge body preserves `padding: 5px 9px`, `border-radius: 7px`, teal alpha border/background, `12px/1.35` font, and `opacity: 0.9`.
-- Badge displays one line under the latest assistant action bar; hide when no valid metric or anchor exists.
+- The entire overlay window is fully transparent and click-through.
+- The usage line has no background, border, radius, padding, or shadow.
+- The line displays one fixed row centered below the composer; hide when no valid metric or composer anchor exists.
+- Use Codex++ metric labels and six ASCII spaces between items.
 - The repository root is `codex-plugins/codex-live-usage`.
 - Commit after every completed task; never commit build output, local settings, real conversations, or user-specific absolute paths.
 
@@ -118,19 +119,18 @@ Run the Task 1 command. Expected: all parser, partial-line, and rotation tests p
 - Modify: `codex-plugins/codex-live-usage/tests/CodexLiveUsage.Tests/Program.cs`
 
 **Interfaces:**
-- Produces: `OverlayPlacement.BelowAnchor(PixelRect host, PixelRect anchor, PixelSize badge, int gap) -> PixelRect?`
-- Produces: `OverlayPlacement.FallbackAboveComposer(PixelRect host, PixelRect composer, PixelSize badge, int gap) -> PixelRect?`
+- Produces: `OverlayPlacement.AboveComposer(PixelRect host, PixelRect composer, PixelSize line, int gap) -> PixelRect?`
 
 - [x] **Step 1: Write failing placement tests**
 
 ```csharp
-var placed = OverlayPlacement.BelowAnchor(
+var placed = OverlayPlacement.AboveComposer(
     new PixelRect(100, 100, 1200, 900),
-    new PixelRect(300, 620, 760, 40),
-    new PixelSize(500, 28),
+    new PixelRect(300, 620, 760, 100),
+    new PixelSize(500, 18),
     6);
 Assert.Equal(300, placed.Left);
-Assert.Equal(666, placed.Top);
+Assert.Equal(596, placed.Top);
 Assert.True(placed.Right <= 1300);
 Assert.True(placed.Bottom <= 1000);
 ```
@@ -145,27 +145,27 @@ Preserve the anchor's left edge. Add the physical-pixel gap below the action bar
 
 - [x] **Step 4: Add boundary and fallback tests**
 
-Assert that a badge wider than the host is clamped to the host width, and that fallback placement moves above the composer rather than leaving the window.
+Assert that a line wider than the host is clamped to the host width and remains centered below the composer.
 
 - [x] **Step 5: Run tests and verify GREEN**
 
 Run the Task 1 command. Expected: placement assertions pass.
 
-### Task 4: WPF Badge And Codex Tracking
+### Task 4: WPF Usage Line And Codex Tracking
 
 **Files:**
 - Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/CodexLiveUsage.csproj`
 - Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/Program.cs`
 - Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/AppController.cs`
-- Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/UsageBadgeWindow.cs`
+- Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/UsageLineWindow.cs`
 - Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/Windows/NativeMethods.cs`
 - Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/Windows/CodexWindowLocator.cs`
-- Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/Windows/AssistantAnchorFinder.cs`
+- Create: `codex-plugins/codex-live-usage/src/CodexLiveUsage/Windows/ComposerLocator.cs`
 
 **Interfaces:**
 - Consumes: `RolloutMetricsMonitor.Poll()` and `OverlayPlacement`.
 - Produces: single-instance `CodexLiveUsage.exe --background`.
-- Produces: transparent click-through WPF badge with a `TextBlock` rendered inside the Codex++-style border.
+- Produces: transparent click-through WPF line with a single `TextBlock`.
 
 - [x] **Step 1: Build the WPF project and verify RED**
 
@@ -179,25 +179,25 @@ Expected: initial project references missing or application classes not yet impl
 
 - [x] **Step 2: Implement WPF visual**
 
-Use `AllowsTransparency=true`, `WindowStyle=None`, `Background=Transparent`, `ShowInTaskbar=false`, and `ShowActivated=false`. Render a `Border` with `CornerRadius=7`, `Padding=(9,5,9,5)`, `Background=#1420B8A6`, `BorderBrush=#4D14B8A6`, and one `TextBlock` at `12px/1.35`.
+Use `AllowsTransparency=true`, `WindowStyle=None`, `Background=Transparent`, `ShowInTaskbar=false`, and `ShowActivated=false`. Render one `TextBlock` at `12px/1.35` with no `Border`, background, padding, or shadow.
 
 - [x] **Step 3: Implement Win32 follow and no-activation**
 
-Find the top-level Codex main window by process path containing `OpenAI\Codex` and title `Codex` or `ChatGPT`. Apply `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT`, set the Codex HWND as owner, and position the badge with physical-to-DIP conversion.
+Find the top-level Codex main window by process path containing `OpenAI\Codex` or `WindowsApps\OpenAI.Codex_`, and title `Codex` or `ChatGPT`. Apply `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT`, set the Codex HWND as owner, and position the line with physical-to-DIP conversion.
 
 - [x] **Step 4: Implement UI Automation anchoring**
 
-Find the last visible action button named one of `复制`, `喜欢`, `不喜欢`, `从此处开始分叉`, `Copy`, `Good response`, `Bad response`, or `Branch from here`. Walk to its closest group/container, use its bounds as the anchor. If unavailable, locate the composer edit control above the taskbar. If neither exists, hide the badge.
+Find the visible Codex composer edit control with the greatest bottom edge in the lower half of the window. Use its physical rectangle as the fixed anchor. If unavailable, hide the line.
 
 - [x] **Step 5: Implement polling and text**
 
 Poll window geometry every 250 ms and rollout data every 1000 ms. Render:
 
 ```text
-上下文 330/1.0K (33%) · 缓存命中率 66.7% · 输入 300 · 输出 30 · 输出速度 15 tok/s · 会话累计 440
+上下文：330/1.0K (33%)      缓存命中率：66.7%      输入：300      输出：30      输出速度：15 tok/s
 ```
 
-Hide the badge when no complete metrics exist. Keep the previous text while a partial JSON line is pending.
+Hide the line when no complete metrics exist. Keep the previous text while a partial JSON line is pending.
 
 - [x] **Step 6: Build and smoke test**
 
@@ -278,17 +278,17 @@ Run `scripts/install.ps1`. Verify task state is `Running`, process count is one,
 
 Keep Codex visible with the current conversation. Capture a screenshot and verify:
 
-- badge appears under the latest assistant action row;
-- background outside the badge is transparent;
-- teal border, tinted background, 7px radius, and one text line match the old style;
+- usage line appears centered directly below the composer;
+- background is fully transparent with no border or container;
+- Codex++ metric labels are separated by six spaces on one line;
 - metrics change after a new token event;
-- badge follows Codex move/resize;
-- badge hides on minimize and recovers on restore;
+- line follows Codex move/resize;
+- line hides on minimize and recovers on restore;
 - text does not overlap reply content or composer.
 
 - [x] **Step 4: Verify partial data and missing anchor**
 
-Append half a JSON line to a temporary fixture and confirm the prior text remains. Move to a conversation with no metrics and confirm the badge hides instead of showing zero/waiting text.
+Append half a JSON line to a temporary fixture and confirm the prior text remains. Move to a conversation with no metrics and confirm the line hides instead of showing zero/waiting text.
 
 - [x] **Step 5: Verify uninstall**
 
@@ -302,20 +302,22 @@ Update the plan checkboxes and README verification section with the exact comman
 
 Verified on 2026-10-25:
 
-- `scripts/build.ps1`: 15/15 C# tests passed, the PowerShell install
+- `scripts/build.ps1`: 16/16 C# tests passed, the PowerShell install
   test passed, Release publish completed with zero build warnings and zero
   errors.
 - `scripts/install.ps1`: task `Codex Live Usage Companion` is `Running`,
   exactly one `CodexLiveUsage.exe` process is active, and the installed
   executable is under `%LOCALAPPDATA%\CodexLiveUsage\app`.
-- Codex move test: moving Codex by `40×20` physical pixels moved the badge by
-  `40×20`; restoring Codex restored the badge to `0×0` delta.
+- Codex move test: moving Codex by `40×20` physical pixels moved the overlay by
+  `40×20`; restoring Codex restored it to `0×0` delta.
 - Codex minimize test: overlay visibility changed `True -> False -> True`
   across minimize and restore. Codex was left restored.
+- Fixed-position test: the transparent line coordinates remained unchanged
+  over a two-second metrics refresh interval.
 - Window styles: `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`, and
   `WS_EX_TOOLWINDOW` are enabled; the Codex main window is the overlay owner.
-- Visual check: badge-only preview is committed at
-  `docs/images/badge.png`; no conversation content is included.
+- Visual check: text-only preview is committed at
+  `docs/images/usage-line.png`; no conversation content is included.
 - Plugin marketplace: `codex-live-usage@personal` is installed and enabled.
 - Uninstall regression: login task, process, LocalAppData install, and build
   artifacts were removed; Codex sessions and config remained intact. The final

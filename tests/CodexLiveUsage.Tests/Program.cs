@@ -111,51 +111,48 @@ Run("switches rollout files and resets after truncation", () =>
     TestAssert.Equal(75d, monitor.Poll()?.ContextPercent);
 });
 
-Run("places the badge directly below the action anchor", () =>
+Run("clamps an oversized line below the composer", () =>
 {
-    var placed = OverlayPlacement.BelowAnchor(
-        new PixelRect(100, 100, 1200, 900),
-        new PixelRect(300, 620, 760, 40),
-        new PixelSize(500, 28),
-        6);
-
-    TestAssert.NotNull(placed);
-    TestAssert.Equal(300, placed!.Value.Left);
-    TestAssert.Equal(666, placed.Value.Top);
-    TestAssert.True(placed.Value.Right <= 1300);
-    TestAssert.True(placed.Value.Bottom <= 1000);
-});
-
-Run("clamps an oversized badge inside the host", () =>
-{
-    var placed = OverlayPlacement.BelowAnchor(
+    var placed = OverlayPlacement.BelowComposer(
         new PixelRect(100, 100, 400, 300),
-        new PixelRect(100, 180, 400, 40),
-        new PixelSize(800, 28),
+        new PixelRect(100, 150, 400, 100),
+        new PixelSize(800, 20),
         6);
 
     TestAssert.NotNull(placed);
     TestAssert.Equal(100, placed!.Value.Left);
     TestAssert.Equal(400, placed.Value.Width);
+    TestAssert.Equal(256, placed.Value.Top);
     TestAssert.Equal(500, placed.Value.Right);
 });
 
-Run("falls back above the composer and keeps the badge visible", () =>
+Run("fixes the transparent usage line directly below the composer", () =>
 {
-    var placed = OverlayPlacement.FallbackAboveComposer(
+    var placed = OverlayPlacement.BelowComposer(
         new PixelRect(100, 100, 900, 700),
-        new PixelRect(220, 650, 650, 120),
-        new PixelSize(500, 28),
+        new PixelRect(220, 650, 650, 100),
+        new PixelSize(500, 18),
         6);
 
     TestAssert.NotNull(placed);
-    TestAssert.Equal(220, placed!.Value.Left);
-    TestAssert.Equal(616, placed.Value.Top);
-    TestAssert.Equal(720, placed.Value.Right);
-    TestAssert.True(placed.Value.Bottom < 650);
+    TestAssert.Equal(295, placed!.Value.Left);
+    TestAssert.Equal(756, placed.Value.Top);
+    TestAssert.Equal(795, placed.Value.Right);
+    TestAssert.True(placed.Value.Top > 750);
 });
 
-Run("formats the badge with Codex++ labels and compact tokens", () =>
+Run("hides the usage line when there is no room below the composer", () =>
+{
+    var placed = OverlayPlacement.BelowComposer(
+        new PixelRect(100, 100, 900, 700),
+        new PixelRect(220, 650, 650, 140),
+        new PixelSize(500, 18),
+        6);
+
+    TestAssert.Null(placed);
+});
+
+Run("formats the usage line with Codex++ labels and compact tokens", () =>
 {
     var text = MetricsFormatter.Format(new MetricsSnapshot(
         ContextUsed: 110_900,
@@ -169,11 +166,12 @@ Run("formats the badge with Codex++ labels and compact tokens", () =>
         SessionTotal: 1_160_000));
 
     TestAssert.Equal(
-        "上下文 110.9K/1.0M (10.6%) · 缓存命中率 92% · 输入 108K · 输出 146 · 输出速度 33.5 tok/s · 会话累计 1.16M",
+        "上下文：110.9K/1.0M (10.6%)      缓存命中率：92%      输入：108K      输出：146      输出速度：33.5 tok/s",
         text);
+    TestAssert.True(!text.Contains("会话累计", StringComparison.Ordinal));
 });
 
-Run("omits unavailable badge metrics without inventing zero", () =>
+Run("omits unavailable usage-line metrics without inventing zero", () =>
 {
     var text = MetricsFormatter.Format(new MetricsSnapshot(
         ContextUsed: 330,
@@ -186,7 +184,47 @@ Run("omits unavailable badge metrics without inventing zero", () =>
         OutputTokensPerSecond: null,
         SessionTotal: null));
 
-    TestAssert.Equal("上下文 330/1.0K (33%)", text);
+    TestAssert.Equal("上下文：330/1.0K (33%)", text);
+});
+
+Run("assigns Microsoft YaHei to labels and Times New Roman to values", () =>
+{
+    var segments = MetricsFormatter.FormatSegments(new MetricsSnapshot(
+        ContextUsed: 110_900,
+        ContextLimit: 1_048_576,
+        ContextPercent: 10.6,
+        CacheHitPercent: 92,
+        LastInput: 108_000,
+        LastOutput: 146,
+        LastTotal: 110_900,
+        OutputTokensPerSecond: 33.5,
+        SessionTotal: 1_160_000));
+
+    TestAssert.True(segments.Count > 0);
+    TestAssert.Equal("上下文：", segments[0].Text);
+    TestAssert.True(segments[0].FontRole == UsageFontRole.ChineseLabel);
+    var contextValue = segments.First(segment => segment.Text.StartsWith("110.9K", StringComparison.Ordinal));
+    TestAssert.True(contextValue.FontRole == UsageFontRole.LatinValue);
+    TestAssert.True(segments.All(segment =>
+        segment.Text.Any(character => character is >= '\u4e00' and <= '\u9fff')
+            ? segment.FontRole == UsageFontRole.ChineseLabel
+            : true));
+});
+
+Run("does not include session total in usage segments", () =>
+{
+    var text = MetricsFormatter.Format(new MetricsSnapshot(
+        ContextUsed: 330,
+        ContextLimit: 1000,
+        ContextPercent: 33,
+        CacheHitPercent: 50,
+        LastInput: 100,
+        LastOutput: 10,
+        LastTotal: 110,
+        OutputTokensPerSecond: 5,
+        SessionTotal: 10_000_000));
+
+    TestAssert.True(!text.Contains("会话累计", StringComparison.Ordinal));
 });
 
 Run("recognizes Microsoft Store and standalone Codex executables", () =>
@@ -204,16 +242,6 @@ Run("rejects unrelated ChatGPT executables and titles", () =>
     TestAssert.True(!CodexWindowMatcher.IsCodexExecutablePath(
         @"C:\Users\Example\AppData\Local\OtherVendor\ChatGPT.exe"));
     TestAssert.True(!CodexWindowMatcher.IsCodexWindowTitle("ChatGPT Help"));
-});
-
-Run("ignores transient Codex status rows when finding reply bottom", () =>
-{
-    TestAssert.True(AssistantUiText.IsTransientStatus("正在思考"));
-    TestAssert.True(AssistantUiText.IsTransientStatus("最新一条回复"));
-    TestAssert.True(AssistantUiText.IsTransientStatus("34 个文件已更改 +2,056 -24"));
-    TestAssert.True(AssistantUiText.IsTransientStatus("Thinking"));
-    TestAssert.True(AssistantUiText.IsTransientStatus("34 files changed +2056 -24"));
-    TestAssert.True(!AssistantUiText.IsTransientStatus("我会继续检查正在思考的边界条件。"));
 });
 
 if (failures.Count > 0)
