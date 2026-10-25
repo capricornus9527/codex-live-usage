@@ -88,7 +88,7 @@ internal sealed class AppController : IDisposable
                 window.Bounds,
                 composer.Value,
                 lineSize,
-                3);
+                2);
             if (placement is null)
             {
                 _line.HideWithoutActivation();

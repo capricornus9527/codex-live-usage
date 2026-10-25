@@ -152,6 +152,19 @@ Run("hides the usage line when there is no room below the composer", () =>
     TestAssert.Null(placed);
 });
 
+Run("keeps the usage line visible when only 23 pixels remain", () =>
+{
+    var placed = OverlayPlacement.BelowComposer(
+        new PixelRect(0, 0, 800, 400),
+        new PixelRect(100, 300, 600, 77),
+        new PixelSize(500, 21),
+        2);
+
+    TestAssert.NotNull(placed);
+    TestAssert.Equal(379, placed!.Value.Top);
+    TestAssert.Equal(400, placed.Value.Bottom);
+});
+
 Run("formats the usage line with Codex++ labels and compact tokens", () =>
 {
     var text = MetricsFormatter.Format(new MetricsSnapshot(

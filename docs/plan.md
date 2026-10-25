@@ -302,7 +302,7 @@ Update the plan checkboxes and README verification section with the exact comman
 
 Verified on 2026-10-25:
 
-- `scripts/build.ps1`: 16/16 C# tests passed, the PowerShell install
+- `scripts/build.ps1`: 17/17 C# tests passed, the PowerShell install
   test passed, Release publish completed with zero build warnings and zero
   errors.
 - `scripts/install.ps1`: task `Codex Live Usage Companion` is `Running`,
@@ -314,7 +314,9 @@ Verified on 2026-10-25:
   across minimize and restore. Codex was left restored.
 - Fixed-position test: the transparent line coordinates remained unchanged
   over a two-second metrics refresh interval.
-- Final composer geometry: text center delta `0 px`, bottom gap `3 px`.
+- Final composer geometry: text center delta `0 px`, bottom gap `2 px`.
+- Compact-window regression: the line remains visible when only 23 px are
+  available below the composer.
 - Final typography: 12 px, Microsoft YaHei labels, Times New Roman values,
   eight-space separators, 100% opacity, and muted-gray `RGB(167, 168, 169)`.
 - Window styles: `WS_EX_TRANSPARENT`, `WS_EX_NOACTIVATE`, and

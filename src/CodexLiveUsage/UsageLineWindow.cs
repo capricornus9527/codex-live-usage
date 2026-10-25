@@ -35,7 +35,7 @@ internal sealed class UsageLineWindow : Window
             FontFamily = new FontFamily("Microsoft YaHei UI"),
             FontSize = 12,
             FontWeight = FontWeights.Normal,
-            LineHeight = 14,
+            LineHeight = 13.5,
             LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
             TextWrapping = TextWrapping.NoWrap,
             TextTrimming = TextTrimming.CharacterEllipsis,
@@ -73,7 +73,7 @@ internal sealed class UsageLineWindow : Window
         _textBlock.Measure(new Size(Math.Max(80, maximumWidthDip), double.PositiveInfinity));
         var desired = _textBlock.DesiredSize;
         Width = Math.Ceiling(Math.Max(120, desired.Width));
-        Height = Math.Ceiling(Math.Max(15, desired.Height));
+        Height = Math.Ceiling(Math.Max(12, desired.Height));
         return new Size(Width, Height);
     }
 

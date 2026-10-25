@@ -140,7 +140,7 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Verification
 
-- 16 automated C# parser, placement, formatting, font-role, and window-matching
+- 17 automated C# parser, placement, formatting, font-role, and window-matching
   tests.
 - PowerShell install validation for .NET 9 detection and directory publishing.
 - Release build completed with zero warnings and zero errors.
