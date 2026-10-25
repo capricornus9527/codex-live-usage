@@ -2,6 +2,7 @@
 **/bin/
 **/obj/
 artifacts/
+tmp/
 
 # IDE-local state
 .vs/

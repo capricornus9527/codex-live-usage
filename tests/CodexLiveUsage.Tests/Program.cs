@@ -189,6 +189,33 @@ Run("omits unavailable badge metrics without inventing zero", () =>
     TestAssert.Equal("上下文 330/1.0K (33%)", text);
 });
 
+Run("recognizes Microsoft Store and standalone Codex executables", () =>
+{
+    TestAssert.True(CodexWindowMatcher.IsCodexExecutablePath(
+        @"C:\Program Files\WindowsApps\OpenAI.Codex_26.1021.3705.0_x64__2p2nqsd0c76g0\app\ChatGPT.exe"));
+    TestAssert.True(CodexWindowMatcher.IsCodexExecutablePath(
+        @"C:\Users\Example\AppData\Local\OpenAI\Codex\app\ChatGPT.exe"));
+    TestAssert.True(CodexWindowMatcher.IsCodexWindowTitle("ChatGPT"));
+    TestAssert.True(CodexWindowMatcher.IsCodexWindowTitle("Project - Codex"));
+});
+
+Run("rejects unrelated ChatGPT executables and titles", () =>
+{
+    TestAssert.True(!CodexWindowMatcher.IsCodexExecutablePath(
+        @"C:\Users\Example\AppData\Local\OtherVendor\ChatGPT.exe"));
+    TestAssert.True(!CodexWindowMatcher.IsCodexWindowTitle("ChatGPT Help"));
+});
+
+Run("ignores transient Codex status rows when finding reply bottom", () =>
+{
+    TestAssert.True(AssistantUiText.IsTransientStatus("正在思考"));
+    TestAssert.True(AssistantUiText.IsTransientStatus("最新一条回复"));
+    TestAssert.True(AssistantUiText.IsTransientStatus("34 个文件已更改 +2,056 -24"));
+    TestAssert.True(AssistantUiText.IsTransientStatus("Thinking"));
+    TestAssert.True(AssistantUiText.IsTransientStatus("34 files changed +2056 -24"));
+    TestAssert.True(!AssistantUiText.IsTransientStatus("我会继续检查正在思考的边界条件。"));
+});
+
 if (failures.Count > 0)
 {
     Console.Error.WriteLine();

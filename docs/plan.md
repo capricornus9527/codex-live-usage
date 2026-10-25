@@ -167,7 +167,7 @@ Run the Task 1 command. Expected: placement assertions pass.
 - Produces: single-instance `CodexLiveUsage.exe --background`.
 - Produces: transparent click-through WPF badge with a `TextBlock` rendered inside the Codex++-style border.
 
-- [ ] **Step 1: Build the WPF project and verify RED**
+- [x] **Step 1: Build the WPF project and verify RED**
 
 Run:
 
@@ -177,19 +177,19 @@ dotnet build .\codex-plugins\codex-live-usage\src\CodexLiveUsage\CodexLiveUsage.
 
 Expected: initial project references missing or application classes not yet implemented.
 
-- [ ] **Step 2: Implement WPF visual**
+- [x] **Step 2: Implement WPF visual**
 
 Use `AllowsTransparency=true`, `WindowStyle=None`, `Background=Transparent`, `ShowInTaskbar=false`, and `ShowActivated=false`. Render a `Border` with `CornerRadius=7`, `Padding=(9,5,9,5)`, `Background=#1420B8A6`, `BorderBrush=#4D14B8A6`, and one `TextBlock` at `12px/1.35`.
 
-- [ ] **Step 3: Implement Win32 follow and no-activation**
+- [x] **Step 3: Implement Win32 follow and no-activation**
 
 Find the top-level Codex main window by process path containing `OpenAI\Codex` and title `Codex` or `ChatGPT`. Apply `WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE | WS_EX_TRANSPARENT`, set the Codex HWND as owner, and position the badge with physical-to-DIP conversion.
 
-- [ ] **Step 4: Implement UI Automation anchoring**
+- [x] **Step 4: Implement UI Automation anchoring**
 
 Find the last visible action button named one of `复制`, `喜欢`, `不喜欢`, `从此处开始分叉`, `Copy`, `Good response`, `Bad response`, or `Branch from here`. Walk to its closest group/container, use its bounds as the anchor. If unavailable, locate the composer edit control above the taskbar. If neither exists, hide the badge.
 
-- [ ] **Step 5: Implement polling and text**
+- [x] **Step 5: Implement polling and text**
 
 Poll window geometry every 250 ms and rollout data every 1000 ms. Render:
 
@@ -199,7 +199,7 @@ Poll window geometry every 250 ms and rollout data every 1000 ms. Render:
 
 Hide the badge when no complete metrics exist. Keep the previous text while a partial JSON line is pending.
 
-- [ ] **Step 6: Build and smoke test**
+- [x] **Step 6: Build and smoke test**
 
 Run the Release build and launch with `--background`. Verify:
 
