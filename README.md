@@ -1,5 +1,7 @@
 # Codex Live Usage
 
+English | [简体中文](README.zh-CN.md)
+
 A local Windows companion that keeps Codex token usage in a fixed, transparent
 line directly below the composer.
 
@@ -128,6 +130,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\InstallScript.Tests.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) before
 submitting changes.
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Verification
 

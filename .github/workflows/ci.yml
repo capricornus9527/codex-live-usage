@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Run C# tests
+        shell: pwsh
+        run: |
+          dotnet run --project .\tests\CodexLiveUsage.Tests\CodexLiveUsage.Tests.csproj -c Release
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run installer tests
+        shell: pwsh
+        run: |
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\InstallScript.Tests.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build and publish
+        shell: pwsh
+        run: |
+          .\scripts\build.ps1 -SkipTests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
