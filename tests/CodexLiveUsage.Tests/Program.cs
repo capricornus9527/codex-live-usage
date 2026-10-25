@@ -155,6 +155,40 @@ Run("falls back above the composer and keeps the badge visible", () =>
     TestAssert.True(placed.Value.Bottom < 650);
 });
 
+Run("formats the badge with Codex++ labels and compact tokens", () =>
+{
+    var text = MetricsFormatter.Format(new MetricsSnapshot(
+        ContextUsed: 110_900,
+        ContextLimit: 1_048_576,
+        ContextPercent: 10.6,
+        CacheHitPercent: 92,
+        LastInput: 108_000,
+        LastOutput: 146,
+        LastTotal: 110_900,
+        OutputTokensPerSecond: 33.5,
+        SessionTotal: 1_160_000));
+
+    TestAssert.Equal(
+        "上下文 110.9K/1.0M (10.6%) · 缓存命中率 92% · 输入 108K · 输出 146 · 输出速度 33.5 tok/s · 会话累计 1.16M",
+        text);
+});
+
+Run("omits unavailable badge metrics without inventing zero", () =>
+{
+    var text = MetricsFormatter.Format(new MetricsSnapshot(
+        ContextUsed: 330,
+        ContextLimit: 1000,
+        ContextPercent: 33,
+        CacheHitPercent: null,
+        LastInput: null,
+        LastOutput: null,
+        LastTotal: null,
+        OutputTokensPerSecond: null,
+        SessionTotal: null));
+
+    TestAssert.Equal("上下文 330/1.0K (33%)", text);
+});
+
 if (failures.Count > 0)
 {
     Console.Error.WriteLine();
@@ -188,6 +222,14 @@ static class TestAssert
         if (actual is not null)
         {
             throw new InvalidOperationException($"Expected null, got {actual}.");
+        }
+    }
+
+    public static void Equal(string expected, string? actual)
+    {
+        if (!string.Equals(expected, actual, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException($"Expected \"{expected}\", got \"{actual ?? "null"}\".");
         }
     }
 
