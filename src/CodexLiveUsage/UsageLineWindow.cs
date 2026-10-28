@@ -11,7 +11,19 @@ namespace CodexLiveUsage;
 
 internal sealed class UsageLineWindow : Window
 {
+    private static readonly FontFamily ChineseFont = new("Microsoft YaHei UI");
+    private static readonly FontFamily LatinFont = new("Times New Roman");
+    private static readonly Brush LightTextBrush =
+        FrozenBrush(Color.FromRgb(167, 168, 169));
+    private static readonly Brush DarkTextBrush =
+        FrozenBrush(Color.FromRgb(178, 184, 188));
     private readonly TextBlock _textBlock;
+    private readonly Dictionary<UsageLineStyle, Size> _measuredSizes = [];
+    private readonly List<Run> _runs = [];
+    private readonly List<UsageFontRole> _runRoles = [];
+    private string _contentSignature = string.Empty;
+    private double _measuredMaxWidth = double.NaN;
+    private bool? _lightTheme;
     private IntPtr _handle;
     private IntPtr _owner;
 
@@ -32,7 +44,7 @@ internal sealed class UsageLineWindow : Window
 
         _textBlock = new TextBlock
         {
-            FontFamily = new FontFamily("Microsoft YaHei UI"),
+            FontFamily = ChineseFont,
             FontSize = 12,
             FontWeight = FontWeights.Normal,
             LineHeight = 13.5,
@@ -60,26 +72,42 @@ internal sealed class UsageLineWindow : Window
         double maximumWidthDip,
         UsageLineStyle style)
     {
-        ApplyTheme();
-        _textBlock.FontSize = style.FontSize;
-        _textBlock.LineHeight = style.LineHeight;
-        _textBlock.MaxWidth = Math.Max(80, maximumWidthDip);
-        _textBlock.Inlines.Clear();
-        foreach (var segment in segments)
+        var maxWidth = Math.Max(80, maximumWidthDip);
+        var signature = string.Concat(
+            segments.Select(segment => $"{segment.FontRole}:{segment.Text}\u001f"));
+        var themeChanged = ApplyTheme();
+        var contentChanged = !string.Equals(signature, _contentSignature, StringComparison.Ordinal);
+        if (contentChanged)
         {
-            _textBlock.Inlines.Add(new Run(segment.Text)
-            {
-                FontFamily = segment.FontRole == UsageFontRole.ChineseLabel
-                    ? new FontFamily("Microsoft YaHei UI")
-                    : new FontFamily("Times New Roman"),
-            });
+            UpdateInlines(segments);
+            _contentSignature = signature;
         }
 
-        _textBlock.Measure(new Size(Math.Max(80, maximumWidthDip), double.PositiveInfinity));
+        if (contentChanged ||
+            themeChanged ||
+            !maxWidth.Equals(_measuredMaxWidth))
+        {
+            _textBlock.MaxWidth = maxWidth;
+            _measuredMaxWidth = maxWidth;
+            _measuredSizes.Clear();
+        }
+
+        if (_measuredSizes.TryGetValue(style, out var cached))
+        {
+            Width = cached.Width;
+            Height = cached.Height;
+            return cached;
+        }
+
+        _textBlock.FontSize = style.FontSize;
+        _textBlock.LineHeight = style.LineHeight;
+        _textBlock.Measure(new Size(maxWidth, double.PositiveInfinity));
         var desired = _textBlock.DesiredSize;
         Width = Math.Ceiling(Math.Max(120, desired.Width));
         Height = Math.Ceiling(Math.Max(style.FontSize, desired.Height));
-        return new Size(Width, Height);
+        var measured = new Size(Width, Height);
+        _measuredSizes[style] = measured;
+        return measured;
     }
 
     public void ShowAt(IntPtr owner, PixelRect bounds, double dpiScale)
@@ -117,15 +145,50 @@ internal sealed class UsageLineWindow : Window
         }
     }
 
-    private void ApplyTheme()
+    private bool ApplyTheme()
     {
         var light = Registry.GetValue(
             @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
             "AppsUseLightTheme",
             1) is not int value || value != 0;
-        _textBlock.Foreground = FrozenBrush(light
-            ? Color.FromRgb(167, 168, 169)
-            : Color.FromRgb(178, 184, 188));
+        if (_lightTheme == light)
+        {
+            return false;
+        }
+
+        _lightTheme = light;
+        _textBlock.Foreground = light ? LightTextBrush : DarkTextBrush;
+        return true;
+    }
+
+    private void UpdateInlines(IReadOnlyList<UsageSegment> segments)
+    {
+        var canReuse = _runs.Count == segments.Count &&
+            _runRoles.SequenceEqual(segments.Select(segment => segment.FontRole));
+        if (!canReuse)
+        {
+            _textBlock.Inlines.Clear();
+            _runs.Clear();
+            _runRoles.Clear();
+            foreach (var segment in segments)
+            {
+                var run = new Run(segment.Text)
+                {
+                    FontFamily = segment.FontRole == UsageFontRole.ChineseLabel
+                        ? ChineseFont
+                        : LatinFont,
+                };
+                _runs.Add(run);
+                _runRoles.Add(segment.FontRole);
+                _textBlock.Inlines.Add(run);
+            }
+            return;
+        }
+
+        for (var index = 0; index < segments.Count; index++)
+        {
+            _runs[index].Text = segments[index].Text;
+        }
     }
 
     private static Brush FrozenBrush(Color color)

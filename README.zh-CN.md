@@ -22,6 +22,9 @@
 - 切换到空闲对话后立即显示该对话自己的数据，输出速度先归零。
 - 根据窗口底部剩余空间，在 12/11/10/9px 字号之间自动压缩。
 - 自动跟随 Codex 窗口移动、最小化和恢复。
+- 登录后自动启动，并每分钟检查一次进程；单实例互斥锁避免重复启动。
+- 数值刷新时复用 WPF 字体、画刷、文本段和测量结果，减少长期资源分配。
+- 未处理异常写入本地轮转日志，便于排查伴随进程退出。
 - 本地只读，不联网、不读取 API Key，不上传对话内容。
 
 效果示例：
@@ -62,7 +65,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 
 1. 运行自动测试并发布 Release。
 2. 将程序复制到 `%LOCALAPPDATA%\CodexLiveUsage\app`。
-3. 注册当前用户登录任务 `Codex Live Usage Companion`。
+3. 注册当前用户任务 `Codex Live Usage Companion`，包含登录触发和每分钟恢复触发。
 4. 立即启动伴随程序。
 
 不需要管理员权限。
@@ -70,6 +73,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\install.ps1
 ## 使用
 
 打开 Codex 并进入有 token 数据的工作任务。用量行会自动显示在输入框下方。Codex 最小化、关闭、找不到输入框或底部空间不足时，用量行自动隐藏。
+
+如果伴随进程异常退出，计划任务会在一分钟内再次启动它。已经在运行时，
+新的启动实例会被单实例互斥锁立即结束，因此不会出现重复用量行。
 
 ## 卸载
 
@@ -101,6 +107,14 @@ $CODEX_HOME\sessions
 CodexLiveUsage.exe --diagnostics .\diagnostics.json
 ```
 
+未处理异常会写入：
+
+```text
+%LOCALAPPDATA%\CodexLiveUsage\error.log
+```
+
+日志超过 1 MiB 后轮转为 `error.log.old`。异常日志可能包含调用栈，但不会记录对话正文。
+
 ## 开发
 
 运行完整测试并发布：
@@ -116,7 +130,7 @@ dotnet run --project .\tests\CodexLiveUsage.Tests\CodexLiveUsage.Tests.csproj -c
 powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\InstallScript.Tests.ps1
 ```
 
-遇到对话切换或用量行显示问题，请查看
+遇到启动恢复、进程退出、对话切换或用量行显示问题，请查看
 [故障排查](docs/troubleshooting.md)。
 
 ## 兼容性

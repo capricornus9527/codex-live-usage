@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Threading;
 using CodexLiveUsage.Windows;
 
 namespace CodexLiveUsage;
@@ -32,6 +33,21 @@ internal static class Program
         var application = new Application
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown,
+        };
+        application.DispatcherUnhandledException += (_, error) =>
+        {
+            CrashLog.Write("Dispatcher", error.Exception);
+            error.Handled = true;
+            application.Shutdown(1);
+        };
+        AppDomain.CurrentDomain.UnhandledException += (_, error) =>
+        {
+            CrashLog.Write("AppDomain", error.ExceptionObject as Exception);
+        };
+        TaskScheduler.UnobservedTaskException += (_, error) =>
+        {
+            CrashLog.Write("TaskScheduler", error.Exception);
+            error.SetObserved();
         };
 
         AppController? controller = null;

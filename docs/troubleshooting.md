@@ -54,3 +54,43 @@ Get-ScheduledTask -TaskName 'Codex Live Usage Companion'
 ```
 
 然后运行诊断模式，确认 `window.Bounds`、`composer` 底边和实际可用高度。
+
+## 用量行消失或伴随进程退出
+
+计划任务 `Codex Live Usage Companion` 同时包含登录触发和每分钟恢复触发。
+进程异常退出后，下一次触发会重新启动；如果进程仍在运行，单实例互斥锁会让
+新实例立即退出，不会产生重复窗口。
+
+先检查任务、上次运行结果和进程：
+
+```powershell
+Get-ScheduledTask -TaskName 'Codex Live Usage Companion'
+Get-ScheduledTaskInfo -TaskName 'Codex Live Usage Companion'
+Get-Process -Name CodexLiveUsage
+```
+
+程序会把未处理异常写入：
+
+```text
+%LOCALAPPDATA%\CodexLiveUsage\error.log
+```
+
+日志超过 1 MiB 后改名为 `error.log.old`。日志可能包含异常调用栈和本机路径，
+但不记录提示词、模型回复或其他对话正文。提交问题前请先检查并删除个人信息。
+
+已观察到的崩溃签名是：
+
+```text
+PresentationCore
+System.OutOfMemoryException
+```
+
+`0.1.1` 已缓存字体、画刷、文本段和测量结果，并捕获未处理异常，以减少刷新时
+反复重建 WPF 对象和便于后续定位。WPF 内存异常可能还有其他触发条件，因此仍需
+结合新生成的 `error.log` 判断。
+
+需要立即恢复时可以运行：
+
+```powershell
+Start-ScheduledTask -TaskName 'Codex Live Usage Companion'
+```

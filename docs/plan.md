@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build and install a Windows companion that displays token usage in a transparent line fixed above the Codex composer without Codex++, MCP UI injection, CDP, or network access.
+**Goal:** Build and install a Windows companion that displays token usage in a transparent line fixed below the Codex composer without Codex++, MCP UI injection, CDP, or network access.
 
 **Architecture:** A boundary-focused .NET 9 core library parses incremental rollout JSONL, routes the current Codex conversation through local IPC, and computes token metrics. A WPF `net9.0-windows` companion locates the composer with UI Automation and renders one adaptive transparent text line below it. A current-user login task starts the companion automatically.
 
@@ -20,7 +20,7 @@
 - The entire overlay window is fully transparent and click-through.
 - The usage line has no background, border, radius, padding, or shadow.
 - The line displays one fixed row centered below the composer; hide when no valid metric or composer anchor exists.
-- Use Codex++ metric labels and six ASCII spaces between items.
+- Use Codex++ metric labels and eight ASCII spaces between items.
 - The repository root is `codex-plugins/codex-live-usage`.
 - Commit after every completed task; never commit build output, local settings, real conversations, or user-specific absolute paths.
 
@@ -120,20 +120,20 @@ Run the Task 1 command. Expected: all parser, partial-line, and rotation tests p
 - Modify: `codex-plugins/codex-live-usage/tests/CodexLiveUsage.Tests/Program.cs`
 
 **Interfaces:**
-- Produces: `OverlayPlacement.AboveComposer(PixelRect host, PixelRect composer, PixelSize line, int gap) -> PixelRect?`
+- Produces: `OverlayPlacement.BelowComposer(PixelRect host, PixelRect composer, PixelSize line, int gap) -> PixelRect?`
 
 - [x] **Step 1: Write failing placement tests**
 
 ```csharp
-var placed = OverlayPlacement.AboveComposer(
+var placed = OverlayPlacement.BelowComposer(
     new PixelRect(100, 100, 1200, 900),
     new PixelRect(300, 620, 760, 100),
     new PixelSize(500, 18),
     6);
-Assert.Equal(300, placed.Left);
-Assert.Equal(596, placed.Top);
-Assert.True(placed.Right <= 1300);
-Assert.True(placed.Bottom <= 1000);
+Assert.Equal(430, placed.Left);
+Assert.Equal(726, placed.Top);
+Assert.Equal(930, placed.Right);
+Assert.Equal(744, placed.Bottom);
 ```
 
 - [x] **Step 2: Run tests and verify RED**
@@ -142,7 +142,7 @@ Expected: missing `OverlayPlacement`, `PixelRect`, and `PixelSize`.
 
 - [x] **Step 3: Implement placement**
 
-Preserve the anchor's left edge. Add the physical-pixel gap below the action bar. Clamp horizontally and vertically inside the host. For fallback, align left with the composer text area and place above its top edge. Never return a negative visible width.
+Center the line under the composer. Add the physical-pixel gap below the composer bottom edge. Clamp horizontally inside the host. Return `null` when the complete line would extend past the host bottom. Never return a negative visible width.
 
 - [x] **Step 4: Add boundary and fallback tests**
 
@@ -192,13 +192,16 @@ Find the visible Codex composer edit control with the greatest bottom edge in th
 
 - [x] **Step 5: Implement polling and text**
 
-Poll window geometry every 250 ms and rollout data every 1000 ms. Render:
+Poll window geometry and IPC routing every 500 ms, and rollout data every
+1000 ms. Render:
 
 ```text
 上下文：330/1.0K (33%)        缓存命中率：66.7%        输入：300        输出：30        输出速度：15 tok/s
 ```
 
-Hide the line when no complete metrics exist. Keep the previous text while a partial JSON line is pending.
+Hide the line when no composer anchor exists. For a selected conversation with
+no token event yet, show the complete zero-metric line with `0 tok/s`. Keep the
+previous text while a partial JSON line is pending.
 
 - [x] **Step 6: Build and smoke test**
 
@@ -228,11 +231,11 @@ Expected: exactly one process; no console window, taskbar button, or focus steal
 
 - [x] **Step 1: Add plugin metadata**
 
-Use `.codex-plugin/plugin.json` with name `codex-live-usage`, version `0.1.0`, display name `Codex 常驻用量`, and the bundled skill. Do not declare an MCP server.
+Use `.codex-plugin/plugin.json` with name `codex-live-usage`, version `0.1.1`, display name `Codex 常驻用量`, and the bundled skill. Do not declare an MCP server.
 
 - [x] **Step 2: Add build and install scripts**
 
-`build.ps1` publishes win-x64 to `artifacts/publish`. `install.ps1` locates that executable, verifies `dotnet --list-runtimes` includes Microsoft.WindowsDesktop.App 9.x, verifies the Codex executable, registers the current-user interactive login task, starts it, and writes `%LOCALAPPDATA%\CodexLiveUsage\install-state.json`.
+`build.ps1` publishes win-x64 to `artifacts/publish`. `install.ps1` locates that executable, verifies `dotnet --list-runtimes` includes Microsoft.WindowsDesktop.App 9.x, verifies the Codex executable, registers the current-user interactive task with login and every-minute recovery triggers, starts it, and writes `%LOCALAPPDATA%\CodexLiveUsage\install-state.json`.
 
 - [x] **Step 3: Add safe uninstall**
 
@@ -257,7 +260,7 @@ Expected: no parser errors.
 
 **Files:**
 - Modify: `codex-plugins/codex-live-usage/README.md`
-- Modify: `docs/superpowers/plans/2026-10-25-codex-live-usage-companion.md` checkboxes
+- Modify: `docs/plan.md` checkboxes and verification results
 
 **Interfaces:**
 - Consumes: all prior tasks.
@@ -333,9 +336,27 @@ Verified on 2026-10-25:
   artifacts were removed; Codex sessions and config remained intact. The final
   build was then reinstalled.
 
+Verified on 2026-10-28 for `0.1.1`:
+
+- `scripts/build.ps1`: 20/20 C# tests passed, the PowerShell install test
+  passed, and Release publish completed without warnings or errors.
+- The scheduled task is `Running`, exposes login and time triggers, uses a
+  `PT1M` recovery interval, and allows only one instance.
+- A forced process exit recovered from PID `27332` to `27204` within 12
+  seconds, leaving one process.
+- A subsequent install completed with stale PID data, confirming upgrades stop
+  only processes whose executable path belongs to the installed app directory.
+- Final process count is one, IPC is connected to the selected conversation,
+  and the overlay is visible.
+- Final physical geometry is `1212,1438,864x21`; the expected left and top
+  both match with a `0 px` delta. Click-through, no-activation, tool-window, and
+  Codex-owner checks all pass.
+- No new `error.log` was created after the clean install.
+
 Remaining limitations:
 
 - If Codex IPC is temporarily unavailable, the selected-session fallback uses
   the newest modified rollout until the route reconnects.
 - Codex UI Automation and rollout schema are internal and may change.
-- The repository has no configured GitHub remote and has not been published.
+- The observed WPF out-of-memory signature has resource-allocation mitigation
+  and automatic recovery, but all possible triggers have not been reproduced.

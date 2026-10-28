@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.1 - 2026-10-28
+
+### Fixed
+
+- Reduced long-running WPF resource growth by caching fonts, brushes, inline
+  runs, and measured line sizes instead of rebuilding the visual tree on every
+  refresh.
+- Added unhandled-exception logging to
+  `%LOCALAPPDATA%\CodexLiveUsage\error.log` without recording conversation
+  content.
+- Added an every-minute scheduled-task recovery trigger. The existing
+  single-instance mutex prevents duplicate companion processes.
+- Fixed upgrades after an automatic restart by stopping only companion
+  processes whose executable path is inside the installed app directory, even
+  when `install-state.json` still contains the previous PID.
+- Documented the observed `PresentationCore` /
+  `System.OutOfMemoryException` crash signature and recovery procedure.
+
 ## 0.1.0 - 2026-10-25
 
 ### Added

@@ -2,6 +2,14 @@ $ErrorActionPreference = 'Stop'
 $pluginRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 . (Join-Path $pluginRoot 'scripts\common.ps1')
 
+$pluginVersion = (Get-Content -LiteralPath (Join-Path $pluginRoot '.codex-plugin\plugin.json') -Raw -Encoding UTF8 |
+    ConvertFrom-Json).version
+$marketplaceVersion = (Get-Content -LiteralPath (Join-Path $pluginRoot 'plugin.json') -Raw -Encoding UTF8 |
+    ConvertFrom-Json).version
+if ($pluginVersion -ne $marketplaceVersion) {
+    throw "Plugin manifest versions do not match: $pluginVersion vs $marketplaceVersion"
+}
+
 $validRuntime = @(
     'Microsoft.NETCore.App 9.0.0 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]',
     'Microsoft.WindowsDesktop.App 9.0.0 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]'

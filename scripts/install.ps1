@@ -12,6 +12,8 @@ $statePath = Join-Path $dataRoot 'install-state.json'
 $publish = Join-Path $pluginRoot 'artifacts\publish'
 $sourceExe = Join-Path $publish 'CodexLiveUsage.exe'
 $installedExe = Join-Path $appRoot 'CodexLiveUsage.exe'
+$pluginVersion = (Get-Content -LiteralPath (Join-Path $pluginRoot '.codex-plugin\plugin.json') -Raw -Encoding UTF8 |
+    ConvertFrom-Json).version
 . (Join-Path $PSScriptRoot 'common.ps1')
 
 if (-not [Environment]::Is64BitOperatingSystem) {
@@ -49,8 +51,22 @@ if (Test-Path -LiteralPath $statePath) {
     }
 }
 
+$resolvedAppRoot = [IO.Path]::GetFullPath($appRoot)
+Get-Process -Name CodexLiveUsage -ErrorAction SilentlyContinue | ForEach-Object {
+    try {
+        if ($_.Path -and
+            $_.Path.StartsWith(
+                $resolvedAppRoot + [IO.Path]::DirectorySeparatorChar,
+                [StringComparison]::OrdinalIgnoreCase)) {
+            Stop-Process -Id $_.Id -Force
+            [void]$_.WaitForExit(5000)
+        }
+    } catch {
+        Write-Warning "Could not inspect process $($_.Id)."
+    }
+}
+
 if (Test-Path -LiteralPath $appRoot) {
-    $resolvedAppRoot = [IO.Path]::GetFullPath($appRoot)
     if (-not $resolvedAppRoot.StartsWith($dataRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Refusing to clear an app path outside the CodexLiveUsage data directory.'
     }
@@ -65,6 +81,11 @@ if (-not (Test-Path -LiteralPath $installedExe -PathType Leaf)) {
 $userId = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $action = New-ScheduledTaskAction -Execute $installedExe -Argument '--background' -WorkingDirectory $appRoot
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $userId
+$recoveryTrigger = New-ScheduledTaskTrigger `
+    -Once `
+    -At (Get-Date).AddMinutes(1) `
+    -RepetitionInterval (New-TimeSpan -Minutes 1) `
+    -RepetitionDuration (New-TimeSpan -Days 3650)
 $principal = New-ScheduledTaskPrincipal -UserId $userId -LogonType Interactive -RunLevel Limited
 $settings = New-ScheduledTaskSettingsSet `
     -AllowStartIfOnBatteries `
@@ -78,7 +99,7 @@ $settings = New-ScheduledTaskSettingsSet `
 Register-ScheduledTask `
     -TaskName $taskName `
     -Action $action `
-    -Trigger $trigger `
+    -Trigger @($trigger, $recoveryTrigger) `
     -Principal $principal `
     -Settings $settings `
     -Description 'Shows local Codex token usage in a centered transparent line below the composer.' `
@@ -102,7 +123,7 @@ if (-not $NoStart) {
 }
 
 @{
-    version = '0.1.0'
+    version = $pluginVersion
     taskName = $taskName
     appPath = $installedExe
     pid = if ($process) { $process.Id } else { $null }

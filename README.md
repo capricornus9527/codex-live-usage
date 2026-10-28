@@ -37,7 +37,10 @@ No Codex++, CDP, DOM injection, proxy, API key, or network request is used.
 - Output speed in tokens per second.
 - Switches to the selected conversation's own rollout data, even when it is idle.
 - Shows `0 tok/s` immediately after a conversation switch until new output arrives.
-- Automatic login startup and Codex window following.
+- Automatic login startup, Codex window following, and an every-minute recovery
+  check protected by a single-instance mutex.
+- Reuses WPF fonts, brushes, text runs, and measured sizes during value updates.
+- Writes unhandled exceptions to a local rotating error log for diagnosis.
 - Hides when Codex is minimized, closes, has no composer anchor, or lacks
   bottom space for the line.
 - Read-only local operation with no telemetry.
@@ -67,7 +70,8 @@ The installer:
 
 1. Runs the automated tests and publishes the app.
 2. Copies the app to `%LOCALAPPDATA%\CodexLiveUsage\app`.
-3. Registers the per-user login task `Codex Live Usage Companion`.
+3. Registers the per-user `Codex Live Usage Companion` task with login and
+   every-minute recovery triggers.
 4. Starts the companion immediately.
 
 No administrator permission is required.
@@ -118,6 +122,11 @@ IDs, and window rectangles:
 CodexLiveUsage.exe --diagnostics .\diagnostics.json
 ```
 
+Unhandled exceptions are written to
+`%LOCALAPPDATA%\CodexLiveUsage\error.log` so a vanished companion can be
+diagnosed. The file rotates to `error.log.old` after 1 MiB. Exception logs may
+contain stack traces, but conversation content is not included.
+
 ## Development
 
 Run tests and publish:
@@ -144,8 +153,8 @@ submitting changes.
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.
 
-See [docs/troubleshooting.md](docs/troubleshooting.md) for current-conversation
-IPC and adaptive-layout diagnostics.
+See [docs/troubleshooting.md](docs/troubleshooting.md) for startup recovery,
+current-conversation IPC, crash-log, and adaptive-layout diagnostics.
 
 ## Verification
 
@@ -155,6 +164,8 @@ IPC and adaptive-layout diagnostics.
 - Release build completed with zero warnings and zero errors.
 - Real Codex window follow, minimize/restore hiding, and click-through styles
   were verified on Windows 11 with the Microsoft Store build.
+- Killing the companion manually was followed by automatic restart on the next
+  scheduled recovery check while leaving one process and one visible line.
 
 ## Compatibility
 
