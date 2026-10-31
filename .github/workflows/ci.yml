@@ -40,3 +40,9 @@ jobs:
         run: |
           .\scripts\build.ps1 -SkipTests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Check WPF layout
+        shell: pwsh
+        run: |
+          $test = Start-Process -FilePath .\artifacts\publish\CodexLiveUsage.exe -ArgumentList '--layout-tests' -Wait -PassThru
+          if ($test.ExitCode -ne 0) { throw 'WPF layout tests failed.' }

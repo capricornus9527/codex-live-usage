@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.2 - 2026-10-31
+
+### Fixed
+
+- Anchor to an enclosing composer container independently of text height, so
+  attachment previews cannot cause the usage line to overlap the composer.
+- Measure natural text width and hide entire metric groups as space shrinks:
+  input/output, output speed, cache hit rate, then context. Restore them as the
+  pane widens; keep the normal font size unless vertical space requires shrinking.
+- Support narrow composer discovery and DPI-scaled container margins.
+- Include regression coverage for attachment geometry, narrow panes, real WPF
+  text measurement, layout caching, and resizing in Windows CI.
+
+### Added
+
+- Original SVG/PNG pulse-meter icon, with logo and composerIcon metadata in
+  both the portable and compatibility plugin manifests.
+
 ## 0.1.1 - 2026-10-28
 
 ### Fixed

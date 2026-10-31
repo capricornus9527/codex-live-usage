@@ -1,6 +1,6 @@
 {
   "name": "codex-live-usage",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "在 Windows Codex 输入框下方居中显示透明单行 token 用量。",
   "author": {
     "name": "Codex Live Usage contributors"
@@ -26,6 +26,9 @@
       "安装 Codex 常驻用量",
       "查看 Codex 常驻用量状态",
       "卸载 Codex 常驻用量"
-    ]
+    ],
+    "logo": "./assets/icon.png",
+    "composerIcon": "./assets/icon.png",
+    "brandColor": "#5ee4c5"
   }
 }

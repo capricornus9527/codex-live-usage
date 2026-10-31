@@ -5,6 +5,24 @@ namespace CodexLiveUsage.Windows;
 
 internal static class ComposerLocator
 {
+    public static IReadOnlyList<PixelRect> InspectAncestors(CodexWindowInfo window)
+    {
+        var root = AutomationElement.FromHandle(window.Handle);
+        var edits = root.FindAll(TreeScope.Descendants, new PropertyCondition(
+            AutomationElement.ControlTypeProperty, ControlType.Edit));
+        var edit = edits.Cast<AutomationElement>()
+            .Where(e => ToBoundingRect(e) is { Width: > 100, Height: > 24 } b &&
+                b.Top > window.Bounds.Top + window.Bounds.Height / 2)
+            .OrderByDescending(e => ToBoundingRect(e)!.Value.Bottom).FirstOrDefault();
+        var result = new List<PixelRect>();
+        for (var depth = 0; edit is not null && depth < 14; depth++)
+        {
+            if (ToBoundingRect(edit) is { } bounds) result.Add(bounds);
+            edit = TreeWalker.RawViewWalker.GetParent(edit);
+        }
+        return result;
+    }
+
     public static PixelRect? Find(CodexWindowInfo window)
     {
         try
@@ -21,7 +39,7 @@ internal static class ComposerLocator
                 .Where(item => item is not null)
                 .Where(item => item!.Bounds is not null)
                 .Select(item => item!)
-                .Where(item => item.Bounds!.Value.Width > 300 && item.Bounds.Value.Height > 24)
+                .Where(item => item.Bounds!.Value.Width > 100 * window.DpiScale && item.Bounds.Value.Height > 16 * window.DpiScale)
                 .Where(item => item.Bounds!.Value.Top > window.Bounds.Top + window.Bounds.Height / 2)
                 .Where(item => item.Bounds!.Value.Bottom <= window.Bounds.Bottom)
                 .OrderByDescending(item => item.Bounds!.Value.Bottom)
@@ -33,7 +51,7 @@ internal static class ComposerLocator
                 return null;
             }
 
-            return FindComposerContainer(edit.Element, edit.Bounds.Value, window.Bounds);
+            return FindComposerContainer(edit.Element, edit.Bounds.Value, window.Bounds, window.DpiScale);
         }
         catch (ElementNotAvailableException)
         {
@@ -69,17 +87,17 @@ internal static class ComposerLocator
             Math.Max(1, (int)Math.Round(bounds.Height)));
     }
 
-    private static PixelRect FindComposerContainer(
+    private static PixelRect? FindComposerContainer(
         AutomationElement edit,
         PixelRect editBounds,
-        PixelRect windowBounds)
+        PixelRect windowBounds,
+        double dpiScale)
     {
         var walker = TreeWalker.RawViewWalker;
         var current = edit;
-        PixelRect? best = null;
-        var maximumWidth = editBounds.Width + Math.Max(80, editBounds.Height * 2);
+        var ancestors = new List<PixelRect>();
 
-        for (var depth = 0; depth < 8; depth++)
+        for (var depth = 0; depth < 14; depth++)
         {
             current = walker.GetParent(current);
             if (current is null)
@@ -88,24 +106,12 @@ internal static class ComposerLocator
             }
 
             var bounds = ToBoundingRect(current);
-            if (bounds is null ||
-                bounds.Value.Width > maximumWidth ||
-                bounds.Value.Height <= editBounds.Height ||
-                bounds.Value.Height > editBounds.Height * 5 ||
-                bounds.Value.Left > windowBounds.Right ||
-                bounds.Value.Right < windowBounds.Left)
+            if (bounds is not null)
             {
-                continue;
-            }
-
-            if (best is null ||
-                bounds.Value.Height > best.Value.Height ||
-                (bounds.Value.Height == best.Value.Height && bounds.Value.Width < best.Value.Width))
-            {
-                best = bounds;
+                ancestors.Add(bounds.Value);
             }
         }
 
-        return best ?? editBounds;
+        return ComposerGeometry.FindContainer(editBounds, windowBounds, ancestors, dpiScale);
     }
 }

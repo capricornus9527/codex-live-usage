@@ -310,6 +310,50 @@ Run("rejects unrelated ChatGPT executables and titles", () =>
     TestAssert.True(!CodexWindowMatcher.IsCodexWindowTitle("ChatGPT Help"));
 });
 
+Run("keeps the outer bottom edge with attachment previews and multiline text", () =>
+{
+    var host = new PixelRect(0, 0, 1200, 1000);
+    var edit = new PixelRect(140, 810, 720, 44);
+    var outer = new PixelRect(112, 480, 776, 480);
+    var selected = ComposerGeometry.FindContainer(edit, host,
+        [new PixelRect(128, 800, 744, 100), outer, host], 1);
+    TestAssert.Equal(960, selected?.Bottom);
+    // The old edit.Height * 5 filter rejects the 480px attachment container.
+    TestAssert.True(outer.Height > edit.Height * 5);
+    var tallerEdit = new PixelRect(140, 700, 720, 154);
+    TestAssert.Equal(960, ComposerGeometry.FindContainer(tallerEdit, host, [outer, host], 1)?.Bottom);
+});
+
+Run("rejects invalid geometry and hides when no enclosing composer exists", () =>
+{
+    var host = new PixelRect(0, 0, 1200, 1000);
+    var edit = new PixelRect(140, 810, 720, 44);
+    TestAssert.Null(ComposerGeometry.FindContainer(edit, host, [host], 1));
+    TestAssert.Null(ComposerGeometry.FindContainer(edit, host, [], double.NaN));
+    TestAssert.Null(ComposerGeometry.FindContainer(new PixelRect(0, 0, 0, 0), host, [], 1));
+});
+
+Run("selects a narrow composer at 150 percent DPI without entering the file pane", () =>
+{
+    var host = new PixelRect(0, 0, 1800, 1500);
+    var edit = new PixelRect(420, 1275, 210, 66);
+    var outer = new PixelRect(378, 900, 294, 525);
+    var selected = ComposerGeometry.FindContainer(edit, host,
+        [outer, new PixelRect(350, 100, 1400, 1350)], 1.5);
+    TestAssert.Equal(294, selected?.Width);
+    TestAssert.Equal(1425, selected?.Bottom);
+});
+
+Run("hides complete metric groups in the requested priority order", () =>
+{
+    string TextAt(int hidden) => string.Concat(MetricsFormatter.FormatSegments(
+        MetricsSnapshot.Empty, hidden).Select(segment => segment.Text));
+    TestAssert.Equal("上下文：0 tokens        缓存命中率：0%        输出速度：0 tok/s", TextAt(1));
+    TestAssert.Equal("上下文：0 tokens        缓存命中率：0%", TextAt(2));
+    TestAssert.Equal("上下文：0 tokens", TextAt(3));
+    TestAssert.Equal("", TextAt(4));
+});
+
 if (failures.Count > 0)
 {
     Console.Error.WriteLine();

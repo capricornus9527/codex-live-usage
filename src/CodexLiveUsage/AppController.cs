@@ -111,12 +111,14 @@ internal sealed class AppController : IDisposable
 
             _line ??= new UsageLineWindow();
             var maximumWidthDip = Math.Max(
-                160,
+                1,
                 composer.Value.Width / window.DpiScale - 8);
             PixelRect? placement = null;
             foreach (var style in LineStyles)
             {
-                var sizeDip = _line.Render(_segments, maximumWidthDip, style);
+                var fitted = _line.RenderFitting(_snapshot!, maximumWidthDip, style);
+                if (fitted is null) break;
+                var sizeDip = fitted.Value;
                 var lineSize = new PixelSize(
                     Math.Max(1, (int)Math.Ceiling(sizeDip.Width * window.DpiScale)),
                     Math.Max(1, (int)Math.Ceiling(sizeDip.Height * window.DpiScale)));

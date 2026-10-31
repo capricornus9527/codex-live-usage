@@ -12,6 +12,10 @@ internal static class Program
     public static int Main(string[] args)
     {
         NativeMethods.TryEnablePerMonitorDpiAwareness();
+        if (args.Length == 1 && args[0] == "--layout-tests")
+        {
+            return DiagnosticsProbe.TestLayout();
+        }
         if (args.Length == 2 && args[0] == "--diagnostics")
         {
             return DiagnosticsProbe.Run(args[1]);

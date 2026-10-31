@@ -7,6 +7,33 @@ namespace CodexLiveUsage;
 
 internal static class DiagnosticsProbe
 {
+    public static int TestLayout()
+    {
+        var line = new UsageLineWindow();
+        var style = new UsageLineStyle(12, 13.5, 2);
+        var widths = Enumerable.Range(0, 4).Select(hidden => line.Render(
+            MetricsFormatter.FormatSegments(MetricsSnapshot.Empty, hidden), 10000, style).Width).ToArray();
+        try
+        {
+            for (var hidden = 0; hidden < 4; hidden++)
+            {
+                var available = widths[hidden];
+                var result = line.RenderFitting(MetricsSnapshot.Empty, available, style);
+                if (result is null || result.Value.Width != available)
+                    throw new InvalidOperationException($"Incorrect group selection at {available} DIP.");
+                // A second render exercises the fit cache.
+                if (line.RenderFitting(MetricsSnapshot.Empty, available, style) != result)
+                    throw new InvalidOperationException("Cached layout changed.");
+            }
+            if (line.RenderFitting(MetricsSnapshot.Empty, widths[3] - 1, style) is not null)
+                throw new InvalidOperationException("Context must hide when it cannot fit.");
+            if (line.RenderFitting(MetricsSnapshot.Empty, widths[0] + 1, style)?.Width != widths[0])
+                throw new InvalidOperationException("Full metrics must return when the pane widens.");
+            return 0;
+        }
+        finally { line.Close(); }
+    }
+
     public static int WatchIpc(string outputPath, int seconds)
     {
         try
@@ -89,6 +116,7 @@ internal static class DiagnosticsProbe
                         window.DpiScale,
                     },
                 composer,
+                composerAncestors = window is null ? null : ComposerLocator.InspectAncestors(window),
             };
             File.WriteAllText(
                 outputPath,

@@ -10,6 +10,18 @@ if ($pluginVersion -ne $marketplaceVersion) {
     throw "Plugin manifest versions do not match: $pluginVersion vs $marketplaceVersion"
 }
 
+$portable = Get-Content -LiteralPath (Join-Path $pluginRoot 'plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+$compatibility = Get-Content -LiteralPath (Join-Path $pluginRoot '.codex-plugin\plugin.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+foreach ($manifestInterface in @($portable.extensions.'com.openai'.interface, $compatibility.interface)) {
+    foreach ($field in @('logo','composerIcon')) {
+        $asset = $manifestInterface.$field
+        if (-not $asset -or -not $asset.StartsWith('./assets/') -or
+            -not (Test-Path -LiteralPath (Join-Path $pluginRoot $asset) -PathType Leaf)) {
+            throw "Missing packaged icon: $field"
+        }
+    }
+}
+
 $validRuntime = @(
     'Microsoft.NETCore.App 9.0.0 [C:\Program Files\dotnet\shared\Microsoft.NETCore.App]',
     'Microsoft.WindowsDesktop.App 9.0.0 [C:\Program Files\dotnet\shared\Microsoft.WindowsDesktop.App]'

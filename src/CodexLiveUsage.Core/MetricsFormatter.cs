@@ -9,12 +9,12 @@ public static class MetricsFormatter
         return string.Concat(FormatSegments(snapshot).Select(segment => segment.Text));
     }
 
-    public static IReadOnlyList<UsageSegment> FormatSegments(MetricsSnapshot snapshot)
+    public static IReadOnlyList<UsageSegment> FormatSegments(MetricsSnapshot snapshot, int hiddenGroups = 0)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
         var metrics = new List<(string Label, string Value)>(5);
 
-        if (snapshot.ContextUsed is not null)
+        if (snapshot.ContextUsed is not null && hiddenGroups < 4)
         {
             if (snapshot.ContextLimit is not null)
             {
@@ -30,22 +30,22 @@ public static class MetricsFormatter
             }
         }
 
-        if (snapshot.CacheHitPercent is not null)
+        if (snapshot.CacheHitPercent is not null && hiddenGroups < 3)
         {
             metrics.Add(("缓存命中率", $"{FormatNumber(snapshot.CacheHitPercent.Value)}%"));
         }
 
-        if (snapshot.LastInput is not null)
+        if (snapshot.LastInput is not null && hiddenGroups < 1)
         {
             metrics.Add(("输入", CompactCount(snapshot.LastInput.Value)));
         }
 
-        if (snapshot.LastOutput is not null)
+        if (snapshot.LastOutput is not null && hiddenGroups < 1)
         {
             metrics.Add(("输出", CompactCount(snapshot.LastOutput.Value)));
         }
 
-        if (snapshot.OutputTokensPerSecond is not null)
+        if (snapshot.OutputTokensPerSecond is not null && hiddenGroups < 2)
         {
             metrics.Add(("输出速度", $"{FormatNumber(snapshot.OutputTokensPerSecond.Value)} tok/s"));
         }

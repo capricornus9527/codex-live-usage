@@ -1,5 +1,7 @@
 # Codex 常驻用量
 
+<img src="assets/icon.png" width="80" height="80" alt="实时用量仪表图标">
+
 [English](README.md) | 简体中文
 
 [![CI](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml)
@@ -19,6 +21,8 @@
 - 字号 12px、不透明度 100%，使用接近 Codex 思考状态的灰色。
 - 每项采用 `标签：数值`，项目之间使用 8 个空格。
 - 显示上下文用量和上限、缓存命中率、本轮输入输出、输出速度。
+- 加入图片或增加多行文字时，以输入框外框底边定位。
+- 右侧打开文件或聊天栏变窄时，依次隐藏：输入/输出 → 输出速度 → 缓存命中率 → 上下文；变宽后自动恢复。
 - 切换到空闲对话后立即显示该对话自己的数据，输出速度先归零。
 - 根据窗口底部剩余空间，在 12/11/10/9px 字号之间自动压缩。
 - 自动跟随 Codex 窗口移动、最小化和恢复。

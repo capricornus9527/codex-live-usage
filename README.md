@@ -1,5 +1,7 @@
 # Codex Live Usage
 
+<img src="assets/icon.png" width="80" height="80" alt="Live usage pulse meter">
+
 English | [简体中文](README.zh-CN.md)
 
 [![CI](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml/badge.svg)](https://github.com/capricornus9527/codex-live-usage/actions/workflows/ci.yml)
@@ -26,6 +28,9 @@ No Codex++, CDP, DOM injection, proxy, API key, or network request is used.
 ## Features
 
 - Fixed position directly below the Codex composer.
+- Tracks the outer composer bottom even with attachment previews or multiline text.
+- As the chat pane narrows, hides input/output, then speed, then cache hit rate,
+  and finally context. Restores metrics when space returns.
 - Fully transparent background with no border, card, or separator symbols.
 - Centered below the composer with eight spaces between metrics.
 - Rendered as one fully opaque 12 px line using Codex's muted-gray text color.

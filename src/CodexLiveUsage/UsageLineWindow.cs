@@ -26,6 +26,10 @@ internal sealed class UsageLineWindow : Window
     private bool? _lightTheme;
     private IntPtr _handle;
     private IntPtr _owner;
+    private string _fitSignature = string.Empty;
+    private double _fitWidth;
+    private UsageLineStyle? _fitStyle;
+    private IReadOnlyList<UsageSegment>? _fitSegments;
 
     public UsageLineWindow()
     {
@@ -50,7 +54,7 @@ internal sealed class UsageLineWindow : Window
             LineHeight = 13.5,
             LineStackingStrategy = LineStackingStrategy.BlockLineHeight,
             TextWrapping = TextWrapping.NoWrap,
-            TextTrimming = TextTrimming.CharacterEllipsis,
+            TextTrimming = TextTrimming.None,
             VerticalAlignment = VerticalAlignment.Center,
             Opacity = 1,
         };
@@ -67,12 +71,38 @@ internal sealed class UsageLineWindow : Window
         };
     }
 
+    public Size? RenderFitting(MetricsSnapshot snapshot, double maximumWidthDip, UsageLineStyle style)
+    {
+        var full = MetricsFormatter.FormatSegments(snapshot);
+        var signature = string.Concat(full.Select(segment => segment.Text));
+        if (_fitSegments is not null && _fitSignature == signature &&
+            _fitWidth == maximumWidthDip && _fitStyle == style)
+        {
+            return Render(_fitSegments, maximumWidthDip, style);
+        }
+
+        for (var hidden = 0; hidden < 4; hidden++)
+        {
+            var segments = hidden == 0 ? full : MetricsFormatter.FormatSegments(snapshot, hidden);
+            if (segments.Count == 0) continue;
+            var size = Render(segments, maximumWidthDip, style);
+            if (size.Width > maximumWidthDip) continue;
+            _fitSignature = signature;
+            _fitWidth = maximumWidthDip;
+            _fitStyle = style;
+            _fitSegments = segments;
+            return size;
+        }
+        _fitSegments = null;
+        return null;
+    }
+
     public Size Render(
         IReadOnlyList<UsageSegment> segments,
         double maximumWidthDip,
         UsageLineStyle style)
     {
-        var maxWidth = Math.Max(80, maximumWidthDip);
+        var maxWidth = Math.Max(1, maximumWidthDip);
         var signature = string.Concat(
             segments.Select(segment => $"{segment.FontRole}:{segment.Text}\u001f"));
         var themeChanged = ApplyTheme();
@@ -87,11 +117,13 @@ internal sealed class UsageLineWindow : Window
             themeChanged ||
             !maxWidth.Equals(_measuredMaxWidth))
         {
-            _textBlock.MaxWidth = maxWidth;
+            _textBlock.MaxWidth = double.PositiveInfinity;
             _measuredMaxWidth = maxWidth;
             _measuredSizes.Clear();
         }
 
+        _textBlock.FontSize = style.FontSize;
+        _textBlock.LineHeight = style.LineHeight;
         if (_measuredSizes.TryGetValue(style, out var cached))
         {
             Width = cached.Width;
@@ -99,11 +131,9 @@ internal sealed class UsageLineWindow : Window
             return cached;
         }
 
-        _textBlock.FontSize = style.FontSize;
-        _textBlock.LineHeight = style.LineHeight;
-        _textBlock.Measure(new Size(maxWidth, double.PositiveInfinity));
+        _textBlock.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         var desired = _textBlock.DesiredSize;
-        Width = Math.Ceiling(Math.Max(120, desired.Width));
+        Width = Math.Ceiling(Math.Max(1, desired.Width));
         Height = Math.Ceiling(Math.Max(style.FontSize, desired.Height));
         var measured = new Size(Width, Height);
         _measuredSizes[style] = measured;

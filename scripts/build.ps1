@@ -53,3 +53,8 @@ if (-not (Test-Path -LiteralPath $executable -PathType Leaf)) {
 }
 
 Write-Output "Built $executable"
+if (-not $SkipTests) {
+    $layoutTest = Start-Process -FilePath $executable -ArgumentList '--layout-tests' -WindowStyle Hidden -Wait -PassThru
+    if ($layoutTest.ExitCode -ne 0) { throw 'WPF layout regression tests failed.' }
+    Write-Output 'PASS WPF natural-width, metric priority, cache, and resize regression tests'
+}
