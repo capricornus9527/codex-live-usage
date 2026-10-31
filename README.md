@@ -163,9 +163,10 @@ current-conversation IPC, crash-log, and adaptive-layout diagnostics.
 
 ## Verification
 
-- 20 automated C# parser, routing, placement, formatting, font-role,
+- 24 automated C# parser, routing, placement, attachment geometry, formatting, font-role,
   zero-state, and window-matching tests.
 - PowerShell install validation for .NET 9 detection and directory publishing.
+- Real WPF text-width, metric-priority, cached-layout, and resize regression tests.
 - Release build completed with zero warnings and zero errors.
 - Real Codex window follow, minimize/restore hiding, and click-through styles
   were verified on Windows 11 with the Microsoft Store build.
